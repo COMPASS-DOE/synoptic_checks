@@ -47,3 +47,9 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+data/*
+data/l1_from_gdrive/*
+data/raw_from_gdrive/*
+
+*.DS_Store
