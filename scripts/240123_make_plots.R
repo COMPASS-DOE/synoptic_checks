@@ -57,7 +57,7 @@ plot_grid(par %>%
             ggplot(aes(datetime, mean_sapflow)) + 
             geom_line(), 
           ncol = 1)
-ggsave("figures/240906/par_and_sapflow.png", height = 5, width = 5)
+ggsave("figures/240906_par_and_sapflow.png", height = 5, width = 5)
 
 
 # 2. Merge into a single dataset -----------------------------------------------
