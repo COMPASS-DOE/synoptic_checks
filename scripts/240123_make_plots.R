@@ -151,8 +151,10 @@ plot_timeperiod <- function(start, end){
 ## Make plots for 9/20 - 10/10
 plot_timeperiod("2022-09-20", "2022-10-10")
 
-
 ## Export
-
-
+data_to_export <- df %>% 
+  filter(datetime > "2022-09-20" &
+           datetime < "2022-10-10") %>% 
+  filter(site == "GWI")
+write_csv(data_to_export, "data/240910_synoptic_sensor_data.csv")
 
