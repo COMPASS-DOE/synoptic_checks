@@ -1,0 +1,47 @@
+---
+title: "Well depth corrections"
+author: "PR"
+date: "2025-02-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, 
+                      message = F, 
+                      warning = F)
+```
+
+## COMPASS Well Aquatroll Water Level calculations
+
+##### Authors: Peter Regier & Stephanie J. Wilson
+
+##### Last Updated: 02-04-2025
+
+/n
+
+### Purpose
+
+
+```{r setup}
+
+## Load required packages
+require(pacman)
+p_load(tidyverse, cowplot, janitor, googlesheets4)
+
+## Set Google path for well dimensions spreadsheet
+#well_dimensions <- "https://docs.google.com/spreadsheets/d/1O4sHvj2FO7EcWEm3WpKEZhFubGn8HCcUsz9EFXhQTXM/edit?gid=0#gid=0"
+
+## If you don't have access to the URL above, there's a local (but potentially out-of-date) 
+## version stored on this github
+well_dimensions <- read_csv("../data/250204_LOCAL_Aquatroll installation info.csv")
+
+## Set ggplot theme
+theme_set(theme_bw())
+
+```
+
+```{r make a CRC example dataset}
+
+
+
+```

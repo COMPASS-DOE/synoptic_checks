@@ -1,0 +1,162 @@
+---
+title: "Synoptic site data check"
+author: "PR"
+date: "2025-02-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      warning = F,
+                      message = F)
+```
+
+Making some notes as a go along for things that should either be changed or at least noted. First, I'm calling from Dropbox, which is a local path on mine, I know there are ways to call URLs, I think Ben uses https://www.rdocumentation.org/packages/rdrop2/versions/0.5.9. I'm also hardwiring the location to store all the datasets, which is bad form, but we'll want to decide how we want to handle that (have folks run off Github exclusively? Would require they use the project. That's my current preference I think).
+
+```{r}
+## Load packages with pacman::p_load
+require(pacman)
+p_load(tidyverse,
+       janitor,
+       parsedate,
+       lubridate,
+       cowplot, 
+       purrr,
+       readr, 
+       googledrive, 
+       PNWColors,
+       googlesheets4)
+
+# Set ggplot theme
+theme_set(theme_bw())
+```
+
+
+
+```{r}
+
+## Set paths
+current_directory = "/Users/regi350/Dropbox/COMPASS_PNNL_Data/current_data"
+archive_directory = "/Users/regi350/Dropbox/COMPASS_PNNL_Data/COMPASS_PNNL_Rawdata_Archive"
+
+## Set strings for current and last month
+month_strings <- c(str_sub(str_replace_all(Sys.Date(), "-", ""), 1, 6), 
+                   str_sub(str_replace_all(Sys.Date() - months(1), "-", ""), 1, 6))
+
+raw_data_path <- "/Users/regi350/Library/CloudStorage/OneDrive-PNNL/Documents/projects/compass/synoptic/data/raw_from_gdrive/synoptic_troll/"
+
+## This cleans out that hard-wired directory so we're not overwriting / reading in old stuff
+do.call(file.remove, list(list.files(raw_data_path, full.names = TRUE)))
+```
+
+Setting up the template for trolls, could more or less copy this format for other data-types. 
+
+```{r}
+
+## This function reads in and cleans up each file
+## Note this won't work with TEMPEST unless you filter to just 600s, and even then I think there were issues. I have a separate TEMPEST script for that reason, and also I just haven't combined em yet
+read_troll <- function(data){
+  
+  filename <- str_replace(data, "^.*/", "")
+  site <- str_split(filename, "_", simplify = T)[,2]
+  location <- str_split(filename, "_", simplify = T)[,3]
+  sensor <- str_split(filename, "_", simplify = T)[,5]
+  
+  read_delim(file = data, skip = 1) %>% 
+    slice(3:n()) %>% 
+    clean_names() %>% 
+    mutate(datetime = parsedate::parse_date(timestamp)) %>% 
+    filter(datetime > "2022-03-01") %>% 
+    mutate_at(vars(contains("600")), as.numeric) %>% 
+    rename_with(~str_remove(., '600[a-z]')) %>% 
+    rename("pressure_psi" = pressure) %>% 
+    mutate(pressure_mbar = pressure_psi * 68.948) %>% 
+    #separate(statname, c("project", "site", "location")) %>% 
+    mutate(site = site, 
+           location = location, 
+           sensor = sensor) %>% 
+    select(datetime, site, location, sensor, 
+           temperature, salinity, rdo_concen, p_h, p_h_orp,
+           depth, water_density, pressure_mbar, pressure_psi, 
+           voltage_ext, battery_int)
+}
+
+## Pull all files from the archive directory, and use filter to only keep Troll datasets
+archive_raw <- list.files(archive_directory, full.names = T)[grepl("WaterLevel", list.files(archive_directory, full.names = T))]
+
+```
+
+This next part pulls in the actual data. I'm putting the two filters (including the site one you wanted) at the top of this chunk, but you could put em wherever. I think it would be shnazzy to put them as dropdown options at the top of the markdown but I don't know how to do that yet, and I'm going for get something to you rather than make it good.
+
+```{r}
+
+## You can enter multiple sites or a single site. Multiple sites must be separated by a "|"
+site <- c("GWI|CRC")
+
+# Combine month strings into a single regex pattern
+month_pattern <- paste(month_strings, collapse = "|")
+
+# Filter the water level files to include only those that match the month strings
+archive_filtered <- archive_raw %>%
+  keep(~ grepl(month_pattern, .x)) %>% 
+  keep(~ grepl(site, .x)) %>% 
+  map(read_troll) %>%
+  bind_rows()
+
+current_raw <- list.files(current_directory, full.names = T)[grepl("WaterLevel", list.files(current_directory, full.names = T))] %>% 
+  keep(~ grepl(site, .x)) %>% 
+  map(read_troll) %>%
+  bind_rows()
+  
+df_raw <- bind_rows(archive_filtered, current_raw)
+
+## Quick check graph. SWH will look wrong cause SWAMP gets sorted below
+ggplot(df_raw, aes(datetime, temperature, color = location)) + 
+  geom_line() + 
+  facet_wrap(~site)
+
+```
+
+```{r}
+## Now the big lift: calculate proper depths for the sensors. This takes two 
+## additional datasets: 1) barometric pressure from Climavue stations, and 
+## 2) well dimensions for the depth of the pressure sensor below ground level.
+
+## Second, read in well dimensions. These are measurements made when installing
+## sensors, and are used to calculate the distance below-ground that the 
+well_dimensions <- read_sheet("https://docs.google.com/spreadsheets/d/1O4sHvj2FO7EcWEm3WpKEZhFubGn8HCcUsz9EFXhQTXM/edit#gid=0") %>% 
+  mutate(location = case_when(transect_location == "Upland" ~ "UP", 
+                              transect_location == "Transition" ~ "TR", 
+                              transect_location == "Wetland" ~ "W"), 
+         ground_to_sensor_cm = ring_to_pressure_sensor_cm - (well_top_to_ground_cm - bolt_to_cap_cm)) %>% 
+  dplyr::select(site, location, ground_to_sensor_cm)
+
+## Add well dimensions to dataset: inner_join ensures no uncorrected WL data makes it through
+df_raw_depths <- inner_join(df_raw, well_dimensions, by = c("site", "location")) %>% 
+  filter(!is.na(pressure_mbar))
+
+## Correct water levels for pressure, density, and well dimensions
+## 0.98 based on lower density of freshwater based on L1 readme
+## 1.05 is upper bound
+df <- df_raw_depths %>% 
+  mutate(density_gcm3_cor = ifelse(water_density >= 0.98 & water_density <= 1.05, water_density, 1), 
+         pressurehead_m = (pressure_mbar * 100) / (density_gcm3_cor * 1000 * 9.80665), 
+         wl_below_surface_m = pressurehead_m - (ground_to_sensor_cm / 100)) %>% 
+  ## This is a weird work-around: need to flag here so that we can easily match to spreadsheet
+  mutate(flag_out_of_water = ifelse(wl_below_surface_m < ((ground_to_sensor_cm/100) * -1), TRUE,FALSE)) %>% 
+  mutate(location = ifelse(site == "OWC" & location == "W", "WC", location), 
+         location = ifelse(site == "OWC" & location == "UP", "WTE", location), 
+         location = ifelse(site == "SWH" & grepl("600A", sensor), "SWAMP", location)) %>% # https://github.com/COMPASS-DOE/data-workflows/issues/117
+  mutate(location = fct_relevel(location, c("UP", "SWAMP", "TR", "WTE", "W", "WC"))) %>% 
+  filter(datetime <= Sys.time())
+
+df_trim <- df %>% 
+  filter(datetime > Sys.time() - days(7))
+
+ggplot(df_trim, aes(datetime, wl_below_surface_m, color = location)) + 
+  geom_line() + 
+  facet_wrap(~site)
+```
+
+
+
