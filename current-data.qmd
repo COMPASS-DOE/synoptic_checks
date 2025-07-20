@@ -1,6 +1,4 @@
 ---
-title: "current-data"
-title-block-banner: true
 author: "COMPASS workflows team"
 params:
   DROPBOX: "/Users/bpbond/Library/CloudStorage/Dropbox"
@@ -13,12 +11,10 @@ format:
     toc-expand: 2
     embed-resources: true
     code-fold: true
+title: "Current Dropbox data: `r params$SITE`"
+title-block-banner: true
 editor: visual
 ---
-
-# Current data for `r params$SITE` 
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
 ```{r init}
 #| include: false
@@ -29,26 +25,54 @@ theme_set(theme_bw())
 library(dplyr)
 library(tidyr)
 
-site <- params$SITE
-dropbox <- params$DROPBOX
-current <- "current_data"
+SITE <- params$SITE
+PATH <- params$DROPBOX
+CURRENT <- "current_data"
 
-read_files <- function(type, site = params$SITE, path = params$DROPBOX) {
-  if(site %in% c("PTR", "CRC", "OWC", "SWH", "GWI", "MSM", "GCW", "DLG")) {
-    subpath <- "COMPASS_PNNL_Data"
-  } else if(site %in% c("TMP")) {
-    subpath <- "TEMPEST_PNNL_Data"
-    current <- "Current_data" # you're killing me, Roy
-  } else {
-    stop("Unknown site: ", site)
+if(SITE %in% c("PTR", "CRC", "OWC", "SWH", "GWI", "MSM", "GCW", "DLG")) {
+  SUBPATH <- "COMPASS_PNNL_Data"
+} else if(site %in% c("TMP")) {
+  SUBPATH <- "TEMPEST_PNNL_Data"
+  CURRENT <- "Current_data" # you're killing me, Roy
+} else {
+  stop("Unknown site: ", site)
+}
+
+```
+
+Data path: `r PATH`
+
+Data folder: `r SUBPATH`
+
+Current data: `r CURRENT`
+
+```{r helpers}
+#| include: false
+
+no_data_check <- function(x, what) {
+  message(nrow(x), " data rows")
+  if(nrow(x) == 0) {
+    cat('::: {.callout-important appearance="simple"}',
+        '## No Data',
+        '',
+        paste('No data files were found for', what),
+        '',
+        ':::', sep = "\n")
   }
+}
+
+read_files <- function(type,
+                       site = SITE, 
+                       path = PATH,
+                       subpath = SUBPATH,
+                       current = CURRENT) {
+
   files <- list.files(file.path(path, subpath, current), 
                       pattern = paste0("_", site, "_.*_", type),
                       full.names = TRUE)
   message("Found ", length(files), " files")
   
   x <- lapply(files, function(f) {
-    message(basename(f))
     txt <- read_lines(f)
     read_csv(I(txt[c(-1, -3, -4)]), show_col_types = FALSE)
   })
@@ -60,17 +84,22 @@ read_files <- function(type, site = params$SITE, path = params$DROPBOX) {
 
 ```
 
-## Sapflow
+# Sapflow
+
+```{r read-sf}
+#| output: "asis"
+sf <- read_files("Sapflow")
+no_data_check(sf, "Sapflow")
+```
 
 ```{r}
-read_files("Sapflow") %>% 
+sf %>% 
   filter(name != "BattV_Avg") %>%  # probably we don't care about this
   separate(Statname, into = c("X", "Site", "Plot")) %>% 
   mutate(port = gsub("DiffVolt._Avg\\(", "", name),
          port = as.integer(gsub(")", "", port)),
          port = as.factor(port)) -> 
   sf
-message("sf has ", nrow(sf), " rows")
 
 p <- ggplot(sf, aes(TIMESTAMP, value, color = port)) +
   facet_grid(Plot ~ .) +
@@ -81,10 +110,9 @@ p <- p + ylim(c(0, 1)) + ggtitle("Data in 0-1 range only")
 print(p)
 ```
 
-::: {.callout-warning appearance="simple"}
+# No data found example
 
-## Pay Attention
-
-Using callouts is an effective way to highlight content that your reader give special consideration or attention.
-
-:::
+```{r}
+#| output: "asis"
+no_data_check(tibble(), "example")
+```
