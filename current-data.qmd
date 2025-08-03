@@ -78,10 +78,8 @@ read_files <- function(type,
   })
   names(x) <- basename(files)
   x %>% 
-    bind_rows() %>% 
-    pivot_longer(-1:-4)
+    bind_rows()
 }
-
 ```
 
 # Sapflow
@@ -93,9 +91,11 @@ no_data_check(sf, "Sapflow")
 ```
 
 ```{r sf-plots}
+#| fig-width: 9
 if(nrow(sf) > 0) {
   sf %>% 
-    filter(name != "BattV_Avg") %>%  # probably we don't care about this
+    pivot_longer(-1:-4) %>% 
+    filter(name != "BattV_Avg") %>%  # we probably don't care about this
     separate(Statname, into = c("X", "Site", "Plot")) %>% 
     mutate(port = gsub("DiffVolt._Avg\\(", "", name),
            port = as.integer(gsub(")", "", port)),
@@ -124,9 +124,100 @@ if(nrow(sf) > 0) {
 }
 ```
 
-# No data found example
+# TEROS
 
-```{r}
+```{r teros-read}
 #| output: "asis"
-no_data_check(tibble(), "example")
+teros <- read_files("Teros") 
+no_data_check(teros, "TEROS")
+```
+
+```{r teros-plots}
+#| fig-width: 9
+#| fig-height: 6
+if(nrow(teros) > 0) {
+  teros %>% 
+    pivot_longer(-1:-4) %>% 
+    filter(name != "BattV_Avg") %>%  # we probably don't care about this
+    separate(Statname, into = c("X", "Site", "Plot")) %>% 
+    mutate(name = gsub("Teros.\\(", "", name),
+           name = gsub(")", "", name)) %>% 
+    separate(name, into = c("port", "sensor"), convert = FALSE) %>% 
+    mutate(sensor_name = case_when(
+      sensor == "1" ~ "EC",
+      sensor == "2" ~ "T",
+      sensor == "3" ~ "VWC"
+    )) -> 
+    teros
+  
+  p <- ggplot(teros, aes(TIMESTAMP, value, color = port)) +
+    facet_grid(sensor_name ~ Plot, scales = "free") +
+    geom_point(na.rm = TRUE) +
+    theme(axis.text.x = element_text(angle = 90))
+  print(p)
+}
+```
+
+```{r teros-table}
+if(nrow(teros) > 0) {
+  teros %>% 
+    filter(!is.na(value)) %>% 
+    mutate(Plot_PB = paste(Plot, PB, sep = "-")) %>% 
+    group_by(Site, Plot_PB, port) %>%
+    summarise(value = n(), .groups = "drop") %>%
+    pivot_wider(names_from = "Plot_PB", values_fill = 0) %>% 
+    knitr::kable()
+}
+```
+
+# AquaTROLL
+
+```{r troll-read}
+#| output: "asis"
+troll <- read_files("WaterLevel")
+no_data_check(troll, "AquaTROLL")
+```
+
+```{r troll-plots}
+#| fig-width: 9
+#| fig-height: 4
+if(nrow(troll) > 0) {
+  troll %>% 
+    select(-starts_with("Aquatroll")) %>% 
+    pivot_longer(-1:-4) %>% 
+    separate(Statname, into = c("X", "Site", "Plot")) %>% 
+    mutate(troll = substr(name, nchar(name), nchar(name)),
+           name = substr(name, 1, nchar(name) - 1)) ->
+    troll
+  
+  for(nm in unique(troll$name)) {
+    x <- filter(troll, name == nm)
+    p <- ggplot(x, aes(TIMESTAMP, value, color = troll)) +
+      facet_grid(name ~ Plot, scales = "free") +
+      geom_point(na.rm = TRUE) +
+      theme(axis.text.x = element_text(angle = 90))
+    print(p)
+  }
+}
+```
+
+```{r troll-table}
+if(nrow(troll) > 0) {
+  troll %>% 
+    filter(!is.na(value)) %>% 
+    mutate(Plot_PB = paste(Plot, PB, sep = "-")) %>% 
+    group_by(Site, Plot_PB, troll) %>%
+    summarise(value = n(), .groups = "drop") %>%
+    pivot_wider(names_from = "Plot_PB", values_fill = 0) %>% 
+    knitr::kable()
+}
+```
+
+# Redox
+
+
+```{r redox-read}
+#| output: "asis"
+troll <- read_files("Redox") 
+no_data_check(troll, "Redox")
 ```
