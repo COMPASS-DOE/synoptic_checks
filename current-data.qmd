@@ -2,7 +2,7 @@
 author: "COMPASS workflows team"
 params:
   DROPBOX: "/Users/bpbond/Library/CloudStorage/Dropbox"
-  SITE: "PTR"
+  SITE: "MSM"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 format: 
