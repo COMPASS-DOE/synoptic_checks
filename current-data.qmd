@@ -96,6 +96,7 @@ if(nrow(sf) > 0) {
   sf %>% 
     pivot_longer(-1:-4) %>% 
     filter(name != "BattV_Avg") %>%  # we probably don't care about this
+    # parse out site and plot info
     separate(Statname, into = c("X", "Site", "Plot")) %>% 
     mutate(port = gsub("DiffVolt._Avg\\(", "", name),
            port = as.integer(gsub(")", "", port)),
@@ -139,6 +140,7 @@ if(nrow(teros) > 0) {
   teros %>% 
     pivot_longer(-1:-4) %>% 
     filter(name != "BattV_Avg") %>%  # we probably don't care about this
+    # parse out site and plot info
     separate(Statname, into = c("X", "Site", "Plot")) %>% 
     mutate(name = gsub("Teros.\\(", "", name),
            name = gsub(")", "", name)) %>% 
@@ -183,8 +185,11 @@ no_data_check(troll, "AquaTROLL")
 #| fig-height: 4
 if(nrow(troll) > 0) {
   troll %>% 
-    select(-starts_with("Aquatroll")) %>% 
+    select(-starts_with("Aquatroll")) %>% # remove text column
     pivot_longer(-1:-4) %>% 
+    # NA value is -99999.00
+    mutate(value = if_else(value == -99999, NA_real_, value)) %>% 
+    # parse out site and plot info
     separate(Statname, into = c("X", "Site", "Plot")) %>% 
     mutate(troll = substr(name, nchar(name), nchar(name)),
            name = substr(name, 1, nchar(name) - 1)) ->
