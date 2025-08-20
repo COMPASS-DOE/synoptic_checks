@@ -5,12 +5,13 @@ params:
   SITE: "MSM"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
+execute:
+  echo: false
 format: 
   html:
     toc: true
     toc-expand: 2
     embed-resources: true
-    code-fold: true
 title: "Current Dropbox data: `r params$SITE`"
 title-block-banner: true
 editor: visual
@@ -74,6 +75,7 @@ read_files <- function(type,
   
   x <- lapply(files, function(f) {
     txt <- read_lines(f)
+    message("\t- ", basename(f), " (", length(txt)-4, " rows)")
     read_csv(I(txt[c(-1, -3, -4)]), show_col_types = FALSE)
   })
   names(x) <- basename(files)
@@ -98,7 +100,8 @@ if(nrow(sf) > 0) {
     filter(name != "BattV_Avg") %>%  # we probably don't care about this
     # parse out site and plot info
     separate(Statname, into = c("X", "Site", "Plot")) %>% 
-    mutate(port = gsub("DiffVolt._Avg\\(", "", name),
+    mutate(Plot = factor(Plot, levels = c("C", "F", "S", "UP", "TR", "WTE", "W")),
+           port = gsub("DiffVolt._Avg\\(", "", name),
            port = as.integer(gsub(")", "", port)),
            port = as.factor(port)) -> 
     sf
@@ -106,10 +109,11 @@ if(nrow(sf) > 0) {
   p <- ggplot(sf, aes(TIMESTAMP, value, color = port)) +
     facet_grid(Plot ~ .) +
     geom_point(na.rm = TRUE)
-  print(p)
+  print(p + ggtitle("Sapflow (all data)"))
   
-  p <- p + ylim(c(0, 1)) + ggtitle("Data in 0-1 range only")
-  print(p)
+  if(any(sf$value < 0) || any(sf$value > 1)) {
+    print(p + ylim(c(0, 1)) + ggtitle("Sapflow (in-range data only)"))
+  }
 }
 ```
 
@@ -142,7 +146,8 @@ if(nrow(teros) > 0) {
     filter(name != "BattV_Avg") %>%  # we probably don't care about this
     # parse out site and plot info
     separate(Statname, into = c("X", "Site", "Plot")) %>% 
-    mutate(name = gsub("Teros.\\(", "", name),
+    mutate(Plot = factor(Plot, levels = c("C", "F", "S", "UP", "TR", "WTE", "W")),
+           name = gsub("Teros.\\(", "", name),
            name = gsub(")", "", name)) %>% 
     separate(name, into = c("port", "sensor"), convert = FALSE) %>% 
     mutate(sensor_name = case_when(
@@ -191,7 +196,8 @@ if(nrow(troll) > 0) {
     mutate(value = if_else(value == -99999, NA_real_, value)) %>% 
     # parse out site and plot info
     separate(Statname, into = c("X", "Site", "Plot")) %>% 
-    mutate(troll = substr(name, nchar(name), nchar(name)),
+    mutate(Plot = factor(Plot, levels = c("C", "F", "S", "UP", "TR", "WTE", "W")),
+           troll = substr(name, nchar(name), nchar(name)),
            name = substr(name, 1, nchar(name) - 1)) ->
     troll
   
