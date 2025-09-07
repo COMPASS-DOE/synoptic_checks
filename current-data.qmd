@@ -36,6 +36,21 @@ if(SITES == "CB") {
   SITES <- c("PTR", "CRC", "OWC")
 }
 
+# Well dimensions, for computing water level below surface
+# This file, and the following code, are from the sensor data pipeline
+WELL_DIMS <- readr::read_csv("ancillary-data/well_dimensions.csv",
+                             comment = "#",
+                             col_types = "ccccddcddddd")
+WELL_DIMS$ground_to_sensor_cm <-
+    with(WELL_DIMS, ring_to_pressure_sensor_cm -
+             (well_top_to_ground_cm - bolt_to_cap_cm))
+# TEMPEST trolls were installed differently; 2 parameters instead of 3
+tmp <- WELL_DIMS$Site == "TMP"
+WELL_DIMS$ground_to_sensor_cm[tmp] <- WELL_DIMS$Bolt_to_sensor_depth_cm[tmp] + WELL_DIMS$Bolt_to_ground_cm[tmp]
+
+WELL_DIMS <- WELL_DIMS[c("Site", "Plot", "Instrument_ID", "ground_to_sensor_cm")]
+
+
 # The design table from the sensor data pipeline
 # dt_ex <- read_csv("ancillary-data/design_table_expanded.csv", show_col_types = FALSE)
 # dt_ex %>% 
@@ -63,6 +78,25 @@ no_data_check <- function(x, what) {
   }
 }
 
+# Read a raw datalogger file. This is copied from the sensor data pipeline code
+read_datalogger_file <- function(filename, quiet = FALSE, ...) {
+
+    # Parse line one to extract logger and table names
+    dat <- read_lines(filename)
+    message("\t- ", basename(filename), " (", length(dat)-4, " rows)")
+    header_split <- strsplit(dat[1], ",")[[1]]
+    header_split <- gsub("\"", "", header_split) # remove quotation marks
+    format_name <- header_split[1] # first field of row 1
+    logger_name <- header_split[2] # second field of row 1
+    table_name <- header_split[length(header_split)]
+
+    x <- read_csv(I(dat[-c(1, 3, 4)]), show_col_types = FALSE)
+    info <- tibble(Logger = rep(logger_name, nrow(x)),
+                   Table = rep(table_name, nrow(x)),
+                   Format = rep(format_name, nrow(x)))
+    as_tibble(cbind(info, x))
+}
+
 read_files <- function(type, sitelist = SITES, path = PATH) {
   
   # Loop through the sites and load files
@@ -85,16 +119,44 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
     filetext <- if_else(length(files) == 1, " file", " files")
     message(site, ": found ", length(files), filetext)
     
-    x <- lapply(files, function(f) {
-      txt <- read_lines(f)
-      message("\t- ", basename(f), " (", length(txt)-4, " rows)")
-      read_csv(I(txt[c(-1, -3, -4)]), show_col_types = FALSE)
-    })
-    names(x) <- basename(files)
+    x <- lapply(files, read_datalogger_file)
     sitedat[[site]] <- bind_rows(x)
   }
   bind_rows(sitedat, .id = "Site")
 }
+
+# Calculate the groundwater level below surface
+# This code is copied straight from the sensor data pipeline
+`CALC_DERIVED_gw-wl-below-surface` <- function(gw_density, gw_pressure, Site, Plot, Instrument_ID) {
+    # The two data frames passed in should *normally* have the
+    # exact same dimensions and ordering, since they're linked
+    # AquaTROLL data from the same site and plot
+    gw_density <- x$`gw-density`$Value
+    gw_pressure <- x$`gw-pressure`$Value
+
+    temp <- merge(x$`gw-density`,
+                  WELL_DIMS,
+                  by = c("Site", "Plot", "Instrument_ID"),
+                  all.x = TRUE)
+    ground_to_sensor_cm <- temp$ground_to_sensor_cm
+
+    if(length(ground_to_sensor_cm) > length(gw_pressure)) {
+        stop("Wrong data lengths, probably because the merge of WELL_DIMS matched multiple lines")
+    }
+#    if(all(is.na(ground_to_sensor_cm))) browser()
+
+    # This follows Peter Regier's code, and Fausto M-S's logic
+    density_gcm3_cor <- ifelse(gw_density >= 0.98 & gw_density <= 1.05, gw_density, 1)
+    pressure_mbar <- ifelse(gw_pressure == -99999, 0, gw_pressure)
+    pressurehead_m <- (pressure_mbar * 100) / (density_gcm3_cor * 1000 * 9.80665)
+
+    # Pick one of our input data frames, overwrite its Value column,
+    # and return it. The calling code in L2.qmd will take care of changing
+    # the research_name and Type columns
+    x$`gw-density`$Value <- round(pressurehead_m - (ground_to_sensor_cm / 100), 4)
+    return(x$`gw-density`)
+}
+
 
 statname_separation <- function(x) {
   PLOT_FACTOR_LEVELS <- c("C", "F", "S", "UP", "TR", "WTE", "W")
@@ -102,11 +164,13 @@ statname_separation <- function(x) {
     # the GCW files' Statename column is slightly different format, which
     # is why we need the extra="drop" parameter
     separate(Statname, into = c("X", "Site_DL", "Plot"), extra = "drop") %>% 
+    select(-X) %>% 
     mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS))
 }
 pivotstep <- function(x) {
   x %>% 
-    pivot_longer(-1:-5) %>% 
+    select(-Format, -RECORD) %>% 
+    pivot_longer(-1:-6) %>% 
     filter(name != "BattV_Avg") # we probably don't care about this
 }
 ```
@@ -223,13 +287,45 @@ if(nrow(troll) > 0) {
     mutate(value = if_else(value == -99999, NA_real_, value)) %>% 
     # parse out site and plot info
     statname_separation() %>% 
-    mutate(troll = substr(name, nchar(name), nchar(name)),
-           name = substr(name, 1, nchar(name) - 1)) ->
+    mutate(Instrument_ID = substr(name, nchar(name), nchar(name)),
+           name = substr(name, 1, nchar(name) - 1)) %>% 
+    # compute water level
+    left_join(WELL_DIMS, by = c("Site", "Plot", "Instrument_ID")) %>% 
+    # TODO  
+    # filter per SW: WL, temp, salinity, DO, and pH
+    filter(name %in% c("Temperature600", "Salinity600", "RDO_concen600",
+                       "pH600", "Water_Density600", "Pressure600")) ->
     troll_long
   
+  # Compute water level. For each Site, Plot, and Instrument_ID, 
+  # extract the pressure, density, and ground_to_sensor info (happily 
+  # guaranteed to be same order and timestamps since from same instrument)
+  troll_long %>% 
+    filter(name %in% c("Water_Density600", "Pressure600"), !is.na(value)) %>% 
+    pivot_wider(names_from = "name") %>% 
+    # This follows Peter Regier's code, and Fausto M-S's logic
+    mutate(density_gcm3_cor = if_else(Water_Density600 >= 0.98 & Water_Density600 <= 1.05, Water_Density600, 1),
+           pressure_mbar = if_else(Pressure600 == -99999, 0, Pressure600),
+           pressurehead_m = (pressure_mbar * 100) / (density_gcm3_cor * 1000 * 9.80665),
+           water_level_cm = round(100 * pressurehead_m - ground_to_sensor_cm, 1)) %>% 
+    select(Site, Plot, Instrument_ID, TIMESTAMP, water_level_cm) -> 
+    wl
+  
+    # join is many-to-one: many names at a given timestamp
+    troll_long %>% 
+      left_join(wl, by = c("Site", "Plot", "Instrument_ID", "TIMESTAMP"), relationship = "many-to-one") ->
+    troll_long
+  
+     p <- ggplot(troll_long, aes(TIMESTAMP, water_level_cm, color = water_level_cm < -ground_to_sensor_cm)) +
+      facet_grid(Site ~ Plot, scales = "free") +
+      geom_point(na.rm = TRUE) +
+       ggtitle("water_level_cm") +
+      theme(axis.text.x = element_text(angle = 90))
+    print(p)
+    
   for(nm in unique(troll_long$name)) {
     x <- filter(troll_long, name == nm)
-    p <- ggplot(x, aes(TIMESTAMP, value, color = troll)) +
+    p <- ggplot(x, aes(TIMESTAMP, value, color = water_level_cm < -ground_to_sensor_cm)) +
       facet_grid(Site ~ Plot, scales = "free") +
       ggtitle(nm) +
       geom_point(na.rm = TRUE) +
@@ -244,7 +340,7 @@ if(nrow(troll) > 0) {
   troll_long %>% 
     filter(!is.na(value)) %>% 
     mutate(Plot_PB = paste(Plot, PB, sep = "-")) %>% 
-    group_by(Site, Plot_PB, troll) %>%
+    group_by(Site, Plot_PB, Instrument_ID) %>%
     summarise(value = n(), .groups = "drop") %>%
     pivot_wider(names_from = "Plot_PB", values_fill = 0) %>% 
     knitr::kable()
@@ -256,6 +352,6 @@ if(nrow(troll) > 0) {
 
 ```{r redox-read}
 #| output: "asis"
-troll <- read_files("Redox") 
-no_data_check(troll, "Redox")
+redox <- read_files("Redox") 
+no_data_check(redox, "Redox")
 ```
