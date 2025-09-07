@@ -2,7 +2,7 @@
 author: "COMPASS workflows team"
 params:
   DROPBOX: "/Users/bpbond/Library/CloudStorage/Dropbox"
-  SITE: "MSM"
+  SITES: "CB"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
@@ -12,7 +12,7 @@ format:
     toc: true
     toc-expand: 2
     embed-resources: true
-title: "Current Dropbox data: `r params$SITE`"
+title: "Current Dropbox data: `r paste(params$SITE, collapse = ', ')`"
 title-block-banner: true
 editor: visual
 ---
@@ -26,32 +26,33 @@ theme_set(theme_bw())
 library(dplyr)
 library(tidyr)
 
-SITE <- params$SITE
+SITES <- params$SITES
 PATH <- params$DROPBOX
-CURRENT <- "current_data"
 
-if(SITE %in% c("PTR", "CRC", "OWC", "SWH", "GWI", "MSM", "GCW", "DLG")) {
-  SUBPATH <- "COMPASS_PNNL_Data"
-} else if(site %in% c("TMP")) {
-  SUBPATH <- "TEMPEST_PNNL_Data"
-  CURRENT <- "Current_data" # you're killing me, Roy
-} else {
-  stop("Unknown site: ", site)
+# User can specify groups of synoptic sites: CB or LE
+if(SITES == "CB") {
+  SITES <- c("SWH", "GWI", "MSM", "GCW")
+} else if(SITES == "LE") {
+  SITES <- c("PTR", "CRC", "OWC")
 }
+
+# The design table from the sensor data pipeline
+# dt_ex <- read_csv("ancillary-data/design_table_expanded.csv", show_col_types = FALSE)
+# dt_ex %>% 
+#   select(Table, loggernet_variable, Site, Plot, Instrument, Instrument_ID, Sensor_ID, research_name) ->
+#   dt_ex
 
 ```
 
+Sites: `r paste(SITES, collapse = ", ")`
+
 Data path: `r PATH`
 
-Data folder: `r SUBPATH`
-
-Current data: `r CURRENT`
-
-```{r helpers}
+```{r helper-functions}
 #| include: false
 
 no_data_check <- function(x, what) {
-  message(nrow(x), " data rows")
+  message("Total: ", nrow(x), " data rows")
   if(nrow(x) == 0) {
     cat('::: {.callout-important appearance="simple"}',
         '## No Data',
@@ -62,25 +63,51 @@ no_data_check <- function(x, what) {
   }
 }
 
-read_files <- function(type,
-                       site = SITE, 
-                       path = PATH,
-                       subpath = SUBPATH,
-                       current = CURRENT) {
-
-  files <- list.files(file.path(path, subpath, current), 
-                      pattern = paste0("_", site, "_.*_", type),
-                      full.names = TRUE)
-  message("Found ", length(files), " files")
+read_files <- function(type, sitelist = SITES, path = PATH) {
   
-  x <- lapply(files, function(f) {
-    txt <- read_lines(f)
-    message("\t- ", basename(f), " (", length(txt)-4, " rows)")
-    read_csv(I(txt[c(-1, -3, -4)]), show_col_types = FALSE)
-  })
-  names(x) <- basename(files)
+  # Loop through the sites and load files
+  sitedat <- list()
+  for(site in sitelist) {
+    # Figure out where this site's files are
+    if(site %in% c("PTR", "CRC", "OWC", "SWH", "GWI", "MSM", "GCW", "DLG")) {
+      SUBPATH <- "COMPASS_PNNL_Data"
+      CURRENT <- "current_data"
+    } else if(site %in% c("TMP")) {
+      SUBPATH <- "TEMPEST_PNNL_Data"
+      CURRENT <- "Current_data" # you're killing me, Roy
+    } else {
+      stop("Unknown site: ", site)
+    }
+    
+    files <- list.files(file.path(path, SUBPATH, CURRENT), 
+                        pattern = paste0("_", site, "_.*_", type),
+                        full.names = TRUE)
+    filetext <- if_else(length(files) == 1, " file", " files")
+    message(site, ": found ", length(files), filetext)
+    
+    x <- lapply(files, function(f) {
+      txt <- read_lines(f)
+      message("\t- ", basename(f), " (", length(txt)-4, " rows)")
+      read_csv(I(txt[c(-1, -3, -4)]), show_col_types = FALSE)
+    })
+    names(x) <- basename(files)
+    sitedat[[site]] <- bind_rows(x)
+  }
+  bind_rows(sitedat, .id = "Site")
+}
+
+statname_separation <- function(x) {
+  PLOT_FACTOR_LEVELS <- c("C", "F", "S", "UP", "TR", "WTE", "W")
   x %>% 
-    bind_rows()
+    # the GCW files' Statename column is slightly different format, which
+    # is why we need the extra="drop" parameter
+    separate(Statname, into = c("X", "Site_DL", "Plot"), extra = "drop") %>% 
+    mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS))
+}
+pivotstep <- function(x) {
+  x %>% 
+    pivot_longer(-1:-5) %>% 
+    filter(name != "BattV_Avg") # we probably don't care about this
 }
 ```
 
@@ -96,22 +123,20 @@ no_data_check(sf, "Sapflow")
 #| fig-width: 9
 if(nrow(sf) > 0) {
   sf %>% 
-    pivot_longer(-1:-4) %>% 
-    filter(name != "BattV_Avg") %>%  # we probably don't care about this
+    pivotstep() %>% 
     # parse out site and plot info
-    separate(Statname, into = c("X", "Site", "Plot")) %>% 
-    mutate(Plot = factor(Plot, levels = c("C", "F", "S", "UP", "TR", "WTE", "W")),
-           port = gsub("DiffVolt._Avg\\(", "", name),
+    statname_separation() %>% 
+    mutate(port = gsub("DiffVolt._Avg\\(", "", name),
            port = as.integer(gsub(")", "", port)),
            port = as.factor(port)) -> 
-    sf
+    sf_long
   
-  p <- ggplot(sf, aes(TIMESTAMP, value, color = port)) +
-    facet_grid(Plot ~ .) +
+  p <- ggplot(sf_long, aes(TIMESTAMP, value, color = port)) +
+    facet_grid(Site ~ Plot) +
     geom_point(na.rm = TRUE)
   print(p + ggtitle("Sapflow (all data)"))
   
-  if(any(sf$value < 0) || any(sf$value > 1)) {
+  if(any(sf_long$value < 0) || any(sf_long$value > 1)) {
     print(p + ylim(c(0, 1)) + ggtitle("Sapflow (in-range data only)"))
   }
 }
@@ -119,7 +144,7 @@ if(nrow(sf) > 0) {
 
 ```{r sf-table}
 if(nrow(sf) > 0) {
-  sf %>% 
+  sf_long %>% 
     filter(!is.na(value)) %>% 
     mutate(Plot_PB = paste(Plot, PB, sep = "-")) %>% 
     group_by(Site, Plot_PB, port) %>%
@@ -142,12 +167,10 @@ no_data_check(teros, "TEROS")
 #| fig-height: 6
 if(nrow(teros) > 0) {
   teros %>% 
-    pivot_longer(-1:-4) %>% 
-    filter(name != "BattV_Avg") %>%  # we probably don't care about this
+    pivotstep() %>% 
     # parse out site and plot info
-    separate(Statname, into = c("X", "Site", "Plot")) %>% 
-    mutate(Plot = factor(Plot, levels = c("C", "F", "S", "UP", "TR", "WTE", "W")),
-           name = gsub("Teros.\\(", "", name),
+    statname_separation() %>% 
+    mutate(name = gsub("Teros.\\(", "", name),
            name = gsub(")", "", name)) %>% 
     separate(name, into = c("port", "sensor"), convert = FALSE) %>% 
     mutate(sensor_name = case_when(
@@ -155,19 +178,23 @@ if(nrow(teros) > 0) {
       sensor == "2" ~ "T",
       sensor == "3" ~ "VWC"
     )) -> 
-    teros
+    teros_long
   
-  p <- ggplot(teros, aes(TIMESTAMP, value, color = port)) +
-    facet_grid(sensor_name ~ Plot, scales = "free") +
-    geom_point(na.rm = TRUE) +
-    theme(axis.text.x = element_text(angle = 90))
-  print(p)
+  for(sn in unique(teros_long$sensor_name)) {
+    teros_sn <- filter(teros_long, sensor_name == sn)
+    p <- ggplot(teros_sn, aes(TIMESTAMP, value, color = port)) +
+      facet_grid(Site ~ Plot, scales = "free") +
+      geom_point(na.rm = TRUE) +
+      theme(axis.text.x = element_text(angle = 90)) +
+      ggtitle(sn)
+    print(p)
+  }
 }
 ```
 
 ```{r teros-table}
 if(nrow(teros) > 0) {
-  teros %>% 
+  teros_long %>% 
     filter(!is.na(value)) %>% 
     mutate(Plot_PB = paste(Plot, PB, sep = "-")) %>% 
     group_by(Site, Plot_PB, port) %>%
@@ -191,20 +218,20 @@ no_data_check(troll, "AquaTROLL")
 if(nrow(troll) > 0) {
   troll %>% 
     select(-starts_with("Aquatroll")) %>% # remove text column
-    pivot_longer(-1:-4) %>% 
+    pivotstep() %>% 
     # NA value is -99999.00
     mutate(value = if_else(value == -99999, NA_real_, value)) %>% 
     # parse out site and plot info
-    separate(Statname, into = c("X", "Site", "Plot")) %>% 
-    mutate(Plot = factor(Plot, levels = c("C", "F", "S", "UP", "TR", "WTE", "W")),
-           troll = substr(name, nchar(name), nchar(name)),
+    statname_separation() %>% 
+    mutate(troll = substr(name, nchar(name), nchar(name)),
            name = substr(name, 1, nchar(name) - 1)) ->
-    troll
+    troll_long
   
-  for(nm in unique(troll$name)) {
-    x <- filter(troll, name == nm)
+  for(nm in unique(troll_long$name)) {
+    x <- filter(troll_long, name == nm)
     p <- ggplot(x, aes(TIMESTAMP, value, color = troll)) +
-      facet_grid(name ~ Plot, scales = "free") +
+      facet_grid(Site ~ Plot, scales = "free") +
+      ggtitle(nm) +
       geom_point(na.rm = TRUE) +
       theme(axis.text.x = element_text(angle = 90))
     print(p)
@@ -214,7 +241,7 @@ if(nrow(troll) > 0) {
 
 ```{r troll-table}
 if(nrow(troll) > 0) {
-  troll %>% 
+  troll_long %>% 
     filter(!is.na(value)) %>% 
     mutate(Plot_PB = paste(Plot, PB, sep = "-")) %>% 
     group_by(Site, Plot_PB, troll) %>%
