@@ -2,14 +2,16 @@
 
 Metadata, etc. for making plots more interpretable.
 
-* `design_table_expanded.csv` - this is an _expanded_ (using `expand_df()`) version of the [sensor data pipeline](https://github.com/COMPASS-DOE/sensor-data-pipeline)'s design table 
-
-AquaTROLL well data:
+AquaTROLLs:
 
 * `well_dimensions.csv` this is copied from the sensor data pipeline
 
+TEROS file extracts copied directly from Google Drive:
 
-These sapflow files are direct copied of the live versions on Google Drive:
+* `TEMPEST_TEROS_Network_Location&Status.csv`
+* `COMPASS_Synoptic_Teros_Monitoring.csv` (added a "Logger" column though)
+
+Sapflow files are direct copies of the live versions on Google Drive:
 
 * `COMPASS_Synoptic_SF_Monitoring.xlsx - Tracking.csv`
 * `TEMPEST_SF_Monitoring.xlsx - Tracking.csv`

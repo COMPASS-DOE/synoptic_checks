@@ -72,12 +72,21 @@ sf_tmp %>%
   select(-Sapflux_ID, -Tree_ID) ->
   SF_METADATA
 
-# The design table from the sensor data pipeline
-# dt_ex <- read_csv("ancillary-data/design_table_expanded.csv", show_col_types = FALSE)
-# dt_ex %>% 
-#   select(Table, loggernet_variable, Site, Plot, Instrument, Instrument_ID, Sensor_ID, research_name) ->
-#   dt_ex
-
+# TEROS information, same deal
+TEROS_TMP_FILE <- "ancillary-data/TEMPEST_TEROS_Network_Location&Status.csv"
+message("Reading ", TEROS_TMP_FILE)
+teros_tmp <- read_csv(TEROS_TMP_FILE, col_types = "c__ccdcc___d")
+TEROS_CB_FILE <- "ancillary-data/COMPASS_Synoptic_Teros_Monitoring.csv"
+message("Reading ", TEROS_CB_FILE)
+teros_cb <- read_csv(TEROS_CB_FILE, col_types = "cc_cddc")
+# TODO: where is LE file?
+teros_tmp %>% 
+  mutate(Site = "TMP") %>% 
+  select(Site, Plot, Logger = `Data Logger ID`, Port = `Terosdata table channel`, ID, Depth_cm) %>% 
+  bind_rows(teros_cb %>% select(Site, Plot = Zone, Logger, Port = Address, ID = `Probe ID`, Depth_cm = Depth)) %>% 
+  mutate(Port = as.character(Port),
+         Site = if_else(Site == "GCREW", "GCW", Site)) ->
+  TEROS_METADATA
 ```
 
 Sites: `r paste(SITES, collapse = ", ")`
@@ -259,9 +268,11 @@ if(nrow(teros) > 0) {
     pivotstep() %>% 
     # parse out site and plot info
     statname_separation() %>% 
-    mutate(name = gsub("Teros.\\(", "", name),
+    mutate(PB = as.character(PB),
+           name = gsub("Teros.\\(", "", name),
            name = gsub(")", "", name)) %>% 
-    separate(name, into = c("port", "sensor"), convert = FALSE) %>% 
+    separate(name, into = c("Port", "sensor"), convert = FALSE) %>% 
+    left_join(TEROS_METADATA, by = c("Site", "Plot", "PB" = "Logger", "Port")) %>% 
     mutate(sensor_name = case_when(
       sensor == "1" ~ "EC",
       sensor == "2" ~ "T",
@@ -269,14 +280,16 @@ if(nrow(teros) > 0) {
     )) -> 
     teros_long
   
-  for(sn in unique(teros_long$sensor_name)) {
-    teros_sn <- filter(teros_long, sensor_name == sn)
-    p <- ggplot(teros_sn, aes(TIMESTAMP, value, color = port)) +
-      facet_grid(Site ~ Plot, scales = "free") +
-      geom_point(na.rm = TRUE) +
-      theme(axis.text.x = element_text(angle = 90)) +
-      ggtitle(sn)
-    print(p)
+  for(site in unique(teros_long$Site)) {
+    for(sn in unique(teros_long$sensor_name)) {
+      teros_site <- filter(teros_long, Site == site, sensor_name == sn)
+      p <- ggplot(teros_site, aes(TIMESTAMP, value, color = ID)) +
+        facet_grid(Depth_cm ~ Plot, scales = "free") +
+        geom_point(na.rm = TRUE) +
+        theme(axis.text.x = element_text(angle = 90)) +
+        ggtitle(paste(site, sn))
+      print(p)
+    }
   }
 }
 ```
@@ -286,7 +299,7 @@ if(nrow(teros) > 0) {
   teros_long %>% 
     filter(!is.na(value)) %>% 
     mutate(Plot_PB = paste(Plot, PB, sep = "-")) %>% 
-    group_by(Site, Plot_PB, port) %>%
+    group_by(Site, Plot_PB, Port) %>%
     summarise(value = n(), .groups = "drop") %>%
     pivot_wider(names_from = "Plot_PB", values_fill = 0) %>% 
     knitr::kable()
