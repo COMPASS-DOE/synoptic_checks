@@ -9,7 +9,7 @@ AquaTROLLs:
 TEROS file extracts copied directly from Google Drive:
 
 * `TEMPEST_TEROS_Network_Location&Status.csv`
-* `COMPASS_Synoptic_Teros_Monitoring.csv` (added a "Logger" column though)
+* `COMPASS_Synoptic_Teros_Monitoring.csv`
 
 Sapflow files are direct copies of the live versions on Google Drive:
 
