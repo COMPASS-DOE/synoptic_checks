@@ -99,6 +99,7 @@ Data path: `r PATH`
 ```{r helper-functions}
 #| include: false
 
+# Insert an HTML banner if no data
 no_data_check <- function(x, what) {
   message("Total: ", nrow(x), " data rows")
   if(nrow(x) == 0) {
@@ -130,6 +131,7 @@ read_datalogger_file <- function(filename, quiet = TRUE, ...) {
     as_tibble(cbind(info, x))
 }
 
+# Find and read raw data files
 read_files <- function(type, sitelist = SITES, path = PATH) {
   
   # Loop through the sites and load files
@@ -158,53 +160,25 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
   bind_rows(sitedat, .id = "Site")
 }
 
-# Calculate the groundwater level below surface
-# This code is copied straight from the sensor data pipeline
-`CALC_DERIVED_gw-wl-below-surface` <- function(gw_density, gw_pressure, Site, Plot, Instrument_ID) {
-    # The two data frames passed in should *normally* have the
-    # exact same dimensions and ordering, since they're linked
-    # AquaTROLL data from the same site and plot
-    gw_density <- x$`gw-density`$Value
-    gw_pressure <- x$`gw-pressure`$Value
-
-    temp <- merge(x$`gw-density`,
-                  WELL_DIMS,
-                  by = c("Site", "Plot", "Instrument_ID"),
-                  all.x = TRUE)
-    ground_to_sensor_cm <- temp$ground_to_sensor_cm
-
-    if(length(ground_to_sensor_cm) > length(gw_pressure)) {
-        stop("Wrong data lengths, probably because the merge of WELL_DIMS matched multiple lines")
-    }
-#    if(all(is.na(ground_to_sensor_cm))) browser()
-
-    # This follows Peter Regier's code, and Fausto M-S's logic
-    density_gcm3_cor <- ifelse(gw_density >= 0.98 & gw_density <= 1.05, gw_density, 1)
-    pressure_mbar <- ifelse(gw_pressure == -99999, 0, gw_pressure)
-    pressurehead_m <- (pressure_mbar * 100) / (density_gcm3_cor * 1000 * 9.80665)
-
-    # Pick one of our input data frames, overwrite its Value column,
-    # and return it. The calling code in L2.qmd will take care of changing
-    # the research_name and Type columns
-    x$`gw-density`$Value <- round(pressurehead_m - (ground_to_sensor_cm / 100), 4)
-    return(x$`gw-density`)
-}
-
-
+# Separate Campbell "Statname" column into useful infomration
 statname_separation <- function(x) {
   x %>% 
-    # the GCW files' Statename column is slightly different format, which
+    # the GCW files' Statname column is slightly different format, which
     # is why we need the extra="drop" parameter
     separate(Statname, into = c("X", "Site_DL", "Plot"), extra = "drop") %>% 
     select(-X) %>% 
     mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS))
 }
+
+# Pivot wide Campbell format to long
 pivotstep <- function(x) {
   x %>% 
     select(-Format, -RECORD) %>% 
     pivot_longer(-1:-6) %>% 
     filter(name != "BattV_Avg") # we probably don't care about this
 }
+
+# Make a nice string, robust to all NA/NaN, for a vector's range
 robust_range <- function(x, digits) {
   if(any(!is.na(x))) {
     return(paste(round(range(x, na.rm = TRUE), digits = digits), collapse = "-"))
@@ -326,7 +300,6 @@ if(nrow(teros) > 0) {
     gt(groupname_col = "Site", row_group_as_column = TRUE) %>% 
     fmt_number(columns = c("Mean", "SD"), decimals = 1) %>% 
     fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
-  
 }
 ```
 
@@ -397,22 +370,24 @@ if(nrow(troll) > 0) {
       geom_point(na.rm = TRUE) +
       theme(axis.text.x = element_text(angle = 90))
     print(p)
-    
-    x %>% 
-      group_by(Site, Plot) %>% 
-      summarise(N_sensor = length(unique(Instrument_ID)), 
-                Mean = mean(value, na.rm = TRUE), 
-                SD = sd(value, na.rm = TRUE), 
-                Range = robust_range(value, 3),
-                N_values = n(), 
-                N_na = sum(is.na(value)), 
-                .groups = "drop") %>% 
-      gt(groupname_col = "Site", row_group_as_column = TRUE) %>%
-      tab_header(nm) %>% 
-      fmt_number(columns = c("Mean", "SD"), decimals = 1) %>% 
-      fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
   }
 }
+```
+
+```{r troll-tables}
+troll_long %>% 
+  group_by(Site, Plot, name) %>% 
+  summarise(N_sensor = length(unique(Instrument_ID)), 
+            Mean = mean(value, na.rm = TRUE), 
+            SD = sd(value, na.rm = TRUE), 
+            Range = robust_range(value, 3),
+            N_values = n(), 
+            N_na = sum(is.na(value)), 
+            .groups = "drop") %>% 
+  gt(groupname_col = "Site", row_group_as_column = TRUE) %>%
+  tab_header(nm) %>% 
+  fmt_number(columns = c("Mean", "SD"), decimals = 1) %>% 
+  fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
 ```
 
 # Redox
