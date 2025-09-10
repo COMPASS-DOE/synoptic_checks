@@ -4,7 +4,7 @@ on:
       - main
       - current-data
 
-name: Current data workflow
+name: Current data qmd
 
 jobs:
   build_run_workflow:
