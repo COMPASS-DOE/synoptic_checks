@@ -30,6 +30,8 @@ library(gt)
 SITES <- params$SITES
 PATH <- params$DROPBOX
 
+PLOT_FACTOR_LEVELS <- c("C", "F", "S", "UP", "TR", "WTE", "W")
+
 # User can specify groups of synoptic sites: CB or LE
 if(SITES == "CB") {
   SITES <- c("SWH", "GWI", "MSM", "GCW")
@@ -190,7 +192,6 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
 
 
 statname_separation <- function(x) {
-  PLOT_FACTOR_LEVELS <- c("C", "F", "S", "UP", "TR", "WTE", "W")
   x %>% 
     # the GCW files' Statename column is slightly different format, which
     # is why we need the extra="drop" parameter
@@ -282,29 +283,31 @@ if(nrow(teros) > 0) {
     pivotstep() %>% 
     # parse out site and plot info
     statname_separation() %>% 
-    mutate(PB = as.character(PB),
+    # NA value is -99999.00
+    mutate(value = if_else(value == -9999, NA_real_, value),
+           PB = as.character(PB),
            name = gsub("Teros.\\(", "", name),
            name = gsub(")", "", name)) %>% 
     separate(name, into = c("Port", "sensor"), convert = FALSE) %>% 
     left_join(TEROS_METADATA, by = c("Site", "Plot", "PB" = "Logger", "Port")) %>% 
-    mutate(sensor_name = case_when(
-      sensor == "1" ~ "EC",
-      sensor == "2" ~ "Temp",
-      sensor == "3" ~ "VWC"
-    )) -> 
+    # the join changes Plot back to character
+    mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS)) %>% 
+    mutate(Depth_cm = as.factor(Depth_cm),
+           sensor_name = case_when(
+             sensor == "1" ~ "EC",
+             sensor == "2" ~ "Temp",
+             sensor == "3" ~ "VWC"
+           )) -> 
     teros_long
   
   for(site in unique(teros_long$Site)) {
-    for(sn in unique(teros_long$sensor_name)) {
-      teros_site <- filter(teros_long, Site == site, sensor_name == sn)
-      p <- ggplot(teros_site, aes(TIMESTAMP, value, color = ID)) +
-        facet_grid(Depth_cm ~ Plot, scales = "free") +
-        geom_point(na.rm = TRUE) +
-        theme(axis.text.x = element_text(angle = 90)) +
-        ylab(sn) +
-        ggtitle(paste(site, "TEROS", sn))
-      print(p)
-    }
+    teros_site <- filter(teros_long, Site == site)
+    p <- ggplot(teros_site, aes(TIMESTAMP, value, color = Depth_cm)) +
+      facet_grid(sensor_name ~ Plot, scales = "free") +
+      geom_point(na.rm = TRUE) +
+      theme(axis.text.x = element_text(angle = 90)) +
+      ggtitle(paste(site, "TEROS"))
+    print(p)
   }
 }
 ```
@@ -350,7 +353,8 @@ if(nrow(troll) > 0) {
            name = substr(name, 1, nchar(name) - 1)) %>% 
     # compute water level
     left_join(WELL_DIMS, by = c("Site", "Plot", "Instrument_ID")) %>% 
-    # TODO  
+    # the join changes Plot back to character
+    mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS)) %>% 
     # filter per SW: WL, temp, salinity, DO, and pH
     filter(name %in% c("Temperature600", "Salinity600", "RDO_concen600",
                        "pH600", "Water_Density600", "Pressure600")) ->
@@ -378,7 +382,8 @@ if(nrow(troll) > 0) {
      p <- ggplot(troll_long, aes(TIMESTAMP, water_level_cm, color = water_level_cm < -ground_to_sensor_cm)) +
       facet_grid(Site ~ Plot, scales = "free") +
       geom_point(na.rm = TRUE) +
-       ggtitle("water_level_cm") +
+      scale_color_manual("WL below sensor", values = c("black", "red")) +
+      ggtitle("water_level_cm") +
       theme(axis.text.x = element_text(angle = 90))
     print(p)
     
@@ -388,6 +393,7 @@ if(nrow(troll) > 0) {
       facet_grid(Site ~ Plot, scales = "free") +
       ylab(nm) +
       ggtitle(nm) +
+      scale_color_manual("WL below sensor", values = c("black", "red")) +
       geom_point(na.rm = TRUE) +
       theme(axis.text.x = element_text(angle = 90))
     print(p)
