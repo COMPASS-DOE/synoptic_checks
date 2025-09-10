@@ -264,6 +264,7 @@ if(nrow(teros) > 0) {
            name = gsub(")", "", name)) %>% 
     separate(name, into = c("Port", "sensor"), convert = FALSE) %>% 
     left_join(TEROS_METADATA, by = c("Site", "Plot", "PB" = "Logger", "Port")) %>% 
+    filter(!is.na(ID)) %>% 
     # the join changes Plot back to character
     mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS)) %>% 
     mutate(Depth_cm = as.factor(Depth_cm),
@@ -385,7 +386,6 @@ troll_long %>%
             N_na = sum(is.na(value)), 
             .groups = "drop") %>% 
   gt(groupname_col = "Site", row_group_as_column = TRUE) %>%
-  tab_header(nm) %>% 
   fmt_number(columns = c("Mean", "SD"), decimals = 1) %>% 
   fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
 ```
