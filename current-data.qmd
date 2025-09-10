@@ -1,7 +1,7 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "/Users/bpbond/Library/CloudStorage/Dropbox"
+  DROPBOX: "~/Library/CloudStorage/Dropbox"
   SITES: "CB"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
@@ -25,6 +25,7 @@ library(ggplot2)
 theme_set(theme_bw())
 library(dplyr)
 library(tidyr)
+library(gt)
 
 SITES <- params$SITES
 PATH <- params$DROPBOX
@@ -109,11 +110,11 @@ no_data_check <- function(x, what) {
 }
 
 # Read a raw datalogger file. This is copied from the sensor data pipeline code
-read_datalogger_file <- function(filename, quiet = FALSE, ...) {
+read_datalogger_file <- function(filename, quiet = TRUE, ...) {
 
     # Parse line one to extract logger and table names
     dat <- read_lines(filename)
-    message("\t- ", basename(filename), " (", length(dat)-4, " rows)")
+    if(!quiet) message("\t- ", basename(filename), " (", length(dat)-4, " rows)")
     header_split <- strsplit(dat[1], ",")[[1]]
     header_split <- gsub("\"", "", header_split) # remove quotation marks
     format_name <- header_split[1] # first field of row 1
@@ -203,6 +204,13 @@ pivotstep <- function(x) {
     pivot_longer(-1:-6) %>% 
     filter(name != "BattV_Avg") # we probably don't care about this
 }
+robust_range <- function(x, digits) {
+  if(any(!is.na(x))) {
+    return(paste(round(range(x, na.rm = TRUE), digits = digits), collapse = "-"))
+  } else {
+    return("-")
+  }
+}
 ```
 
 # Sapflow
@@ -229,6 +237,7 @@ if(nrow(sf) > 0) {
   for(site in unique(sf_long$Site)) {
     p <- ggplot(filter(sf_long, Site == site), aes(TIMESTAMP, value, color = Tree)) +
       facet_grid(. ~ Plot) +
+      ylab("Raw sapflow") +
       geom_point(na.rm = TRUE) + 
       ggtitle(site)
     print(p)
@@ -243,12 +252,17 @@ if(nrow(sf) > 0) {
 ```{r sf-table}
 if(nrow(sf) > 0) {
   sf_long %>% 
-    filter(!is.na(value)) %>% 
-    mutate(Plot_PB = paste(Plot, PB, sep = "-")) %>% 
-    group_by(Site, Plot_PB, Port) %>%
-    summarise(value = n(), .groups = "drop") %>%
-    pivot_wider(names_from = "Plot_PB", values_fill = 0) %>% 
-    knitr::kable()
+    group_by(Site, Plot) %>% 
+    summarise(N_sensor = length(unique(Tree)), 
+              Mean = mean(value, na.rm = TRUE), 
+              SD = sd(value, na.rm = TRUE), 
+              Range = robust_range(value, 3),
+              N_values = n(), 
+              N_na = sum(is.na(value)), 
+              .groups = "drop") %>% 
+    gt(groupname_col = "Site", row_group_as_column = TRUE) %>% 
+    fmt_number(columns = c("Mean", "SD"), decimals = 3) %>% 
+    fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
 }
 ```
 
@@ -275,7 +289,7 @@ if(nrow(teros) > 0) {
     left_join(TEROS_METADATA, by = c("Site", "Plot", "PB" = "Logger", "Port")) %>% 
     mutate(sensor_name = case_when(
       sensor == "1" ~ "EC",
-      sensor == "2" ~ "T",
+      sensor == "2" ~ "Temp",
       sensor == "3" ~ "VWC"
     )) -> 
     teros_long
@@ -287,7 +301,8 @@ if(nrow(teros) > 0) {
         facet_grid(Depth_cm ~ Plot, scales = "free") +
         geom_point(na.rm = TRUE) +
         theme(axis.text.x = element_text(angle = 90)) +
-        ggtitle(paste(site, sn))
+        ylab(sn) +
+        ggtitle(paste(site, "TEROS", sn))
       print(p)
     }
   }
@@ -296,13 +311,19 @@ if(nrow(teros) > 0) {
 
 ```{r teros-table}
 if(nrow(teros) > 0) {
-  teros_long %>% 
-    filter(!is.na(value)) %>% 
-    mutate(Plot_PB = paste(Plot, PB, sep = "-")) %>% 
-    group_by(Site, Plot_PB, Port) %>%
-    summarise(value = n(), .groups = "drop") %>%
-    pivot_wider(names_from = "Plot_PB", values_fill = 0) %>% 
-    knitr::kable()
+    teros_long %>% 
+    group_by(Site, Plot, sensor_name) %>% 
+    summarise(N_sensor = length(unique(Port)), 
+              Mean = mean(value, na.rm = TRUE), 
+              SD = sd(value, na.rm = TRUE), 
+              Range = robust_range(value, 1),
+              N_values = n(), 
+              N_na = sum(is.na(value)), 
+              .groups = "drop") %>% 
+    gt(groupname_col = "Site", row_group_as_column = TRUE) %>% 
+    fmt_number(columns = c("Mean", "SD"), decimals = 1) %>% 
+    fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
+  
 }
 ```
 
@@ -365,28 +386,30 @@ if(nrow(troll) > 0) {
     x <- filter(troll_long, name == nm)
     p <- ggplot(x, aes(TIMESTAMP, value, color = water_level_cm < -ground_to_sensor_cm)) +
       facet_grid(Site ~ Plot, scales = "free") +
+      ylab(nm) +
       ggtitle(nm) +
       geom_point(na.rm = TRUE) +
       theme(axis.text.x = element_text(angle = 90))
     print(p)
+    
+    x %>% 
+      group_by(Site, Plot) %>% 
+      summarise(N_sensor = length(unique(Instrument_ID)), 
+                Mean = mean(value, na.rm = TRUE), 
+                SD = sd(value, na.rm = TRUE), 
+                Range = robust_range(value, 3),
+                N_values = n(), 
+                N_na = sum(is.na(value)), 
+                .groups = "drop") %>% 
+      gt(groupname_col = "Site", row_group_as_column = TRUE) %>%
+      tab_header(nm) %>% 
+      fmt_number(columns = c("Mean", "SD"), decimals = 1) %>% 
+      fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
   }
 }
 ```
 
-```{r troll-table}
-if(nrow(troll) > 0) {
-  troll_long %>% 
-    filter(!is.na(value)) %>% 
-    mutate(Plot_PB = paste(Plot, PB, sep = "-")) %>% 
-    group_by(Site, Plot_PB, Instrument_ID) %>%
-    summarise(value = n(), .groups = "drop") %>%
-    pivot_wider(names_from = "Plot_PB", values_fill = 0) %>% 
-    knitr::kable()
-}
-```
-
 # Redox
-
 
 ```{r redox-read}
 #| output: "asis"
