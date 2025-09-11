@@ -48,8 +48,14 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+# OS files
+.DS_Store
+
+# User data
 data/*
 data/l1_from_gdrive/*
 data/raw_from_gdrive/*
 
-*.DS_Store
+# Quarto end result
+*.html
+/current-data_files

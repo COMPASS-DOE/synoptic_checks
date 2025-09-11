@@ -1,0 +1,399 @@
+---
+author: "COMPASS workflows team"
+params:
+  DROPBOX: "~/Library/CloudStorage/Dropbox"
+  SITES: "CB"
+date: now
+date-format: "YYYY-MM-DD HH:mm:ssZ"
+execute:
+  echo: false
+format: 
+  html:
+    toc: true
+    toc-expand: 2
+    embed-resources: true
+title: "Current Dropbox data: `r paste(params$SITE, collapse = ', ')`"
+title-block-banner: true
+editor: visual
+---
+
+```{r init}
+#| include: false
+
+library(readr)
+library(ggplot2)
+theme_set(theme_bw())
+library(dplyr)
+library(tidyr)
+library(gt)
+
+SITES <- params$SITES
+PATH <- params$DROPBOX
+
+PLOT_FACTOR_LEVELS <- c("C", "F", "S", "UP", "TR", "WTE", "W")
+
+# User can specify groups of synoptic sites: CB or LE
+if(SITES == "CB") {
+  SITES <- c("SWH", "GWI", "MSM", "GCW")
+} else if(SITES == "LE") {
+  SITES <- c("PTR", "CRC", "OWC")
+}
+
+# Well dimensions, for computing water level below surface
+# This file, and the following code, are from the sensor data pipeline
+WELL_DIMS_FILE <- "ancillary-data/well_dimensions.csv"
+message("Reading ", WELL_DIMS_FILE)
+WELL_DIMS <- readr::read_csv(WELL_DIMS_FILE,
+                             comment = "#",
+                             col_types = "ccccddcddddd")
+WELL_DIMS$ground_to_sensor_cm <-
+    with(WELL_DIMS, ring_to_pressure_sensor_cm -
+             (well_top_to_ground_cm - bolt_to_cap_cm))
+# TEMPEST trolls were installed differently; 2 parameters instead of 3
+tmp <- WELL_DIMS$Site == "TMP"
+WELL_DIMS$ground_to_sensor_cm[tmp] <- WELL_DIMS$Bolt_to_sensor_depth_cm[tmp] + WELL_DIMS$Bolt_to_ground_cm[tmp]
+
+WELL_DIMS <- WELL_DIMS[c("Site", "Plot", "Instrument_ID", "ground_to_sensor_cm")]
+
+# Sapflow information. These files are from different places on the
+# Google Drive and need to be munged to the same format
+SF_TMP_FILE <- "ancillary-data/TEMPEST_SF_Monitoring.xlsx - Tracking.csv"
+message("Reading ", SF_TMP_FILE)
+sf_tmp <- read_csv(SF_TMP_FILE, col_types = "ccccccdd__c__")
+SF_CB_FILE <- "ancillary-data/COMPASS_Synoptic_SF_Monitoring.xlsx - Tracking.csv"
+message("Reading ", SF_CB_FILE)
+sf_cb <- read_csv(SF_CB_FILE, col_types = "cccc_cdd__c__")
+SF_LE_FILE <- "ancillary-data/LE_sapflow_inventory - Copy of Sheet1.csv"
+message("Reading ", SF_LE_FILE)
+sf_le <- read_csv(SF_LE_FILE, col_types = "ccdcdcc__")
+sf_tmp %>%
+  mutate(Site = "TMP") %>% 
+  select(Site, Logger, Port, Sapflux_ID, Tree_ID) %>% 
+  bind_rows(sf_cb %>% select(Site, Logger, Port, Sapflux_ID, Tree_ID)) %>% 
+  bind_rows(sf_le %>% select(Site, Logger, Port, Sapflux_ID = Tree_Code, Tree_ID = Tag)) %>% 
+  mutate(Tree = paste0(Sapflux_ID, " (", Tree_ID, ")")) %>% 
+  select(-Sapflux_ID, -Tree_ID) ->
+  SF_METADATA
+
+# TEROS information, same deal
+TEROS_TMP_FILE <- "ancillary-data/TEMPEST_TEROS_Network_Location&Status.csv"
+message("Reading ", TEROS_TMP_FILE)
+teros_tmp <- read_csv(TEROS_TMP_FILE, col_types = "c__ccdcc___d")
+TEROS_CB_FILE <- "ancillary-data/COMPASS_Synoptic_Teros_Monitoring.csv"
+message("Reading ", TEROS_CB_FILE)
+teros_cb <- read_csv(TEROS_CB_FILE, col_types = "cc_cddc")
+# TODO: where is LE file?
+teros_tmp %>% 
+  mutate(Site = "TMP") %>% 
+  select(Site, Plot, Logger = `Data Logger ID`, Port = `Terosdata table channel`, ID, Depth_cm) %>% 
+  bind_rows(teros_cb %>% select(Site, Plot = Zone, Logger, Port = Address, ID = `Probe ID`, Depth_cm = Depth)) %>% 
+  mutate(Port = as.character(Port),
+         Site = if_else(Site == "GCREW", "GCW", Site)) ->
+  TEROS_METADATA
+```
+
+Sites: `r paste(SITES, collapse = ", ")`
+
+Data path: `r PATH`
+
+```{r helper-functions}
+#| include: false
+
+# Insert an HTML banner if no data
+no_data_check <- function(x, what) {
+  message("Total: ", nrow(x), " data rows")
+  if(nrow(x) == 0) {
+    cat('::: {.callout-important appearance="simple"}',
+        '## No Data',
+        '',
+        paste('No data files were found for', what),
+        '',
+        ':::', sep = "\n")
+  }
+}
+
+# Read a raw datalogger file. This is copied from the sensor data pipeline code
+read_datalogger_file <- function(filename, quiet = TRUE, ...) {
+
+    # Parse line one to extract logger and table names
+    dat <- read_lines(filename)
+    if(!quiet) message("\t- ", basename(filename), " (", length(dat)-4, " rows)")
+    header_split <- strsplit(dat[1], ",")[[1]]
+    header_split <- gsub("\"", "", header_split) # remove quotation marks
+    format_name <- header_split[1] # first field of row 1
+    logger_name <- header_split[2] # second field of row 1
+    table_name <- header_split[length(header_split)]
+
+    x <- read_csv(I(dat[-c(1, 3, 4)]), show_col_types = FALSE)
+    info <- tibble(Logger = rep(logger_name, nrow(x)),
+                   Table = rep(table_name, nrow(x)),
+                   Format = rep(format_name, nrow(x)))
+    as_tibble(cbind(info, x))
+}
+
+# Find and read raw data files
+read_files <- function(type, sitelist = SITES, path = PATH) {
+  
+  # Loop through the sites and load files
+  sitedat <- list()
+  for(site in sitelist) {
+    # Figure out where this site's files are
+    if(site %in% c("PTR", "CRC", "OWC", "SWH", "GWI", "MSM", "GCW", "DLG")) {
+      SUBPATH <- "COMPASS_PNNL_Data"
+      CURRENT <- "current_data"
+    } else if(site %in% c("TMP")) {
+      SUBPATH <- "TEMPEST_PNNL_Data"
+      CURRENT <- "Current_data" # you're killing me, Roy
+    } else {
+      stop("Unknown site: ", site)
+    }
+    
+    files <- list.files(file.path(path, SUBPATH, CURRENT), 
+                        pattern = paste0("_", site, "_.*_", type),
+                        full.names = TRUE)
+    filetext <- if_else(length(files) == 1, " file", " files")
+    message(site, ": found ", length(files), filetext)
+    
+    x <- lapply(files, read_datalogger_file)
+    sitedat[[site]] <- bind_rows(x)
+  }
+  bind_rows(sitedat, .id = "Site")
+}
+
+# Separate Campbell "Statname" column into useful infomration
+statname_separation <- function(x) {
+  x %>% 
+    # the GCW files' Statname column is slightly different format, which
+    # is why we need the extra="drop" parameter
+    separate(Statname, into = c("X", "Site_DL", "Plot"), extra = "drop") %>% 
+    select(-X) %>% 
+    mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS))
+}
+
+# Pivot wide Campbell format to long
+pivotstep <- function(x) {
+  x %>% 
+    select(-Format, -RECORD) %>% 
+    pivot_longer(-1:-6) %>% 
+    filter(name != "BattV_Avg") # we probably don't care about this
+}
+
+# Make a nice string, robust to all NA/NaN, for a vector's range
+robust_range <- function(x, digits) {
+  if(any(!is.na(x))) {
+    return(paste(round(range(x, na.rm = TRUE), digits = digits), collapse = "-"))
+  } else {
+    return("-")
+  }
+}
+```
+
+# Sapflow
+
+```{r sf-read}
+#| output: "asis"
+sf <- read_files("Sapflow")
+no_data_check(sf, "Sapflow")
+```
+
+```{r sf-plots}
+#| fig-width: 9
+if(nrow(sf) > 0) {
+  sf %>% 
+    pivotstep() %>% 
+    # parse out site and plot info
+    statname_separation() %>% 
+    mutate(PB = as.character(PB),
+           Port = gsub("DiffVolt._Avg\\(", "", name),
+           Port = as.double(gsub(")", "", Port))) %>%
+    left_join(SF_METADATA, by = c("Site",  "PB" = "Logger", "Port")) -> 
+    sf_long
+  
+  for(site in unique(sf_long$Site)) {
+    p <- ggplot(filter(sf_long, Site == site), aes(TIMESTAMP, value, color = Tree)) +
+      facet_grid(. ~ Plot) +
+      ylab("Raw sapflow") +
+      geom_point(na.rm = TRUE) + 
+      ggtitle(site)
+    print(p)
+  }
+  
+  # if(any(sf_long$value < 0) || any(sf_long$value > 1)) {
+  #   print(p + ylim(c(0, 1)) + ggtitle("Sapflow (in-range data only)"))
+  # }
+}
+```
+
+```{r sf-table}
+if(nrow(sf) > 0) {
+  sf_long %>% 
+    group_by(Site, Plot) %>% 
+    summarise(N_sensor = length(unique(Tree)), 
+              Mean = mean(value, na.rm = TRUE), 
+              SD = sd(value, na.rm = TRUE), 
+              Range = robust_range(value, 3),
+              N_values = n(), 
+              N_na = sum(is.na(value)), 
+              .groups = "drop") %>% 
+    gt(groupname_col = "Site", row_group_as_column = TRUE) %>% 
+    fmt_number(columns = c("Mean", "SD"), decimals = 3) %>% 
+    fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
+}
+```
+
+# TEROS
+
+```{r teros-read}
+#| output: "asis"
+teros <- read_files("Teros") 
+no_data_check(teros, "TEROS")
+```
+
+```{r teros-plots}
+#| fig-width: 9
+#| fig-height: 6
+if(nrow(teros) > 0) {
+  teros %>% 
+    pivotstep() %>% 
+    # parse out site and plot info
+    statname_separation() %>% 
+    # NA value is -99999.00
+    mutate(value = if_else(value == -9999, NA_real_, value),
+           PB = as.character(PB),
+           name = gsub("Teros.\\(", "", name),
+           name = gsub(")", "", name)) %>% 
+    separate(name, into = c("Port", "sensor"), convert = FALSE) %>% 
+    left_join(TEROS_METADATA, by = c("Site", "Plot", "PB" = "Logger", "Port")) %>% 
+    filter(!is.na(ID)) %>% 
+    # the join changes Plot back to character
+    mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS)) %>% 
+    mutate(Depth_cm = as.factor(Depth_cm),
+           sensor_name = case_when(
+             sensor == "1" ~ "EC",
+             sensor == "2" ~ "Temp",
+             sensor == "3" ~ "VWC"
+           )) -> 
+    teros_long
+  
+  for(site in unique(teros_long$Site)) {
+    teros_site <- filter(teros_long, Site == site)
+    p <- ggplot(teros_site, aes(TIMESTAMP, value, color = Depth_cm)) +
+      facet_grid(sensor_name ~ Plot, scales = "free") +
+      geom_point(na.rm = TRUE) +
+      theme(axis.text.x = element_text(angle = 90)) +
+      ggtitle(paste(site, "TEROS"))
+    print(p)
+  }
+}
+```
+
+```{r teros-table}
+if(nrow(teros) > 0) {
+    teros_long %>% 
+    group_by(Site, Plot, sensor_name) %>% 
+    summarise(N_sensor = length(unique(Port)), 
+              Mean = mean(value, na.rm = TRUE), 
+              SD = sd(value, na.rm = TRUE), 
+              Range = robust_range(value, 1),
+              N_values = n(), 
+              N_na = sum(is.na(value)), 
+              .groups = "drop") %>% 
+    gt(groupname_col = "Site", row_group_as_column = TRUE) %>% 
+    fmt_number(columns = c("Mean", "SD"), decimals = 1) %>% 
+    fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
+}
+```
+
+# AquaTROLL
+
+```{r troll-read}
+#| output: "asis"
+troll <- read_files("WaterLevel")
+no_data_check(troll, "AquaTROLL")
+```
+
+```{r troll-plots}
+#| fig-width: 9
+#| fig-height: 4
+if(nrow(troll) > 0) {
+  troll %>% 
+    select(-starts_with("Aquatroll")) %>% # remove text column
+    pivotstep() %>% 
+    # NA value is -99999.00
+    mutate(value = if_else(value == -99999, NA_real_, value)) %>% 
+    # parse out site and plot info
+    statname_separation() %>% 
+    mutate(Instrument_ID = substr(name, nchar(name), nchar(name)),
+           name = substr(name, 1, nchar(name) - 1)) %>% 
+    # compute water level
+    left_join(WELL_DIMS, by = c("Site", "Plot", "Instrument_ID")) %>% 
+    # the join changes Plot back to character
+    mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS)) %>% 
+    # filter per SW: WL, temp, salinity, DO, and pH
+    filter(name %in% c("Temperature600", "Salinity600", "RDO_concen600",
+                       "pH600", "Water_Density600", "Pressure600")) ->
+    troll_long
+  
+  # Compute water level. For each Site, Plot, and Instrument_ID, 
+  # extract the pressure, density, and ground_to_sensor info (happily 
+  # guaranteed to be same order and timestamps since from same instrument)
+  troll_long %>% 
+    filter(name %in% c("Water_Density600", "Pressure600"), !is.na(value)) %>% 
+    pivot_wider(names_from = "name") %>% 
+    # This follows Peter Regier's code, and Fausto M-S's logic
+    mutate(density_gcm3_cor = if_else(Water_Density600 >= 0.98 & Water_Density600 <= 1.05, Water_Density600, 1),
+           pressure_mbar = if_else(Pressure600 == -99999, 0, Pressure600),
+           pressurehead_m = (pressure_mbar * 100) / (density_gcm3_cor * 1000 * 9.80665),
+           water_level_cm = round(100 * pressurehead_m - ground_to_sensor_cm, 1)) %>% 
+    select(Site, Plot, Instrument_ID, TIMESTAMP, water_level_cm) -> 
+    wl
+  
+    # join is many-to-one: many names at a given timestamp
+    troll_long %>% 
+      left_join(wl, by = c("Site", "Plot", "Instrument_ID", "TIMESTAMP"), relationship = "many-to-one") ->
+    troll_long
+  
+     p <- ggplot(troll_long, aes(TIMESTAMP, water_level_cm, color = water_level_cm < -ground_to_sensor_cm)) +
+      facet_grid(Site ~ Plot, scales = "free") +
+      geom_point(na.rm = TRUE) +
+      scale_color_manual("WL below sensor", values = c("black", "red")) +
+      ggtitle("water_level_cm") +
+      theme(axis.text.x = element_text(angle = 90))
+    print(p)
+    
+  for(nm in unique(troll_long$name)) {
+    x <- filter(troll_long, name == nm)
+    p <- ggplot(x, aes(TIMESTAMP, value, color = water_level_cm < -ground_to_sensor_cm)) +
+      facet_grid(Site ~ Plot, scales = "free") +
+      ylab(nm) +
+      ggtitle(nm) +
+      scale_color_manual("WL below sensor", values = c("black", "red")) +
+      geom_point(na.rm = TRUE) +
+      theme(axis.text.x = element_text(angle = 90))
+    print(p)
+  }
+}
+```
+
+```{r troll-tables}
+troll_long %>% 
+  group_by(Site, Plot, name) %>% 
+  summarise(N_sensor = length(unique(Instrument_ID)), 
+            Mean = mean(value, na.rm = TRUE), 
+            SD = sd(value, na.rm = TRUE), 
+            Range = robust_range(value, 3),
+            N_values = n(), 
+            N_na = sum(is.na(value)), 
+            .groups = "drop") %>% 
+  gt(groupname_col = "Site", row_group_as_column = TRUE) %>%
+  fmt_number(columns = c("Mean", "SD"), decimals = 1) %>% 
+  fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
+```
+
+# Redox
+
+```{r redox-read}
+#| output: "asis"
+redox <- read_files("Redox") 
+no_data_check(redox, "Redox")
+```
