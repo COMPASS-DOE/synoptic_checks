@@ -1,7 +1,7 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "C:/Users/wilsonsj/Dropbox (Smithsonian)""
+  DROPBOX: "C:/Users/wilsonsj/Dropbox (Smithsonian)"
   SITES: "CB"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"

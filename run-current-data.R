@@ -18,3 +18,9 @@ library(quarto)
 quarto_render("current-data.qmd", execute_params = list(DROPBOX = DROPBOX))
 
 message("All done")
+
+#maybe SW will add: 
+#current-data-CB/LE-20250904 
+#if running CB put it in CB-checks 
+#if running LE put it in Le-checks
+#quarto_render probably has 
