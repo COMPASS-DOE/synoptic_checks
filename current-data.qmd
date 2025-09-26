@@ -1,8 +1,8 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "C:/Users/rbitten/Dropbox"
-  SITES: "CB"
+  DROPBOX: "C:/Users/wilsonsj/Smithsonian Dropbox/Stephanie Wilson"
+  SITES: "TMP"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
