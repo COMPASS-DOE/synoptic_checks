@@ -1,7 +1,7 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "C:/Users/wilsonsj/Smithsonian Dropbox/Stephanie Wilson"
+  DROPBOX: "~/Dropbox/"
   SITES: "TMP"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
@@ -142,15 +142,18 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
     if(site %in% c("PTR", "CRC", "OWC", "SWH", "GWI", "MSM", "GCW", "DLG")) {
       SUBPATH <- "COMPASS_PNNL_Data"
       CURRENT <- "current_data"
+      PATTERN <- paste0("_", site, "_.*_", type)
     } else if(site %in% c("TMP")) {
       SUBPATH <- "TEMPEST_PNNL_Data"
       CURRENT <- "Current_data" # you're killing me, Roy
+      PATTERN <- paste0("_", type)
     } else {
       stop("Unknown site: ", site)
     }
     
     files <- list.files(file.path(path, SUBPATH, CURRENT), 
-                        pattern = paste0("_", site, "_.*_", type),
+                        pattern = PATTERN,
+                        ignore.case = TRUE, # TMP has different capitalization
                         full.names = TRUE)
     filetext <- if_else(length(files) == 1, " file", " files")
     message(site, ": found ", length(files), filetext)
