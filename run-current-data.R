@@ -3,6 +3,7 @@
 # If on GitHub Actions, use the testing folder
 # BBL September 2025
 
+library(quarto)
 
 if(Sys.getenv("CI") == "") {
   # Normal usage
@@ -14,9 +15,8 @@ if(Sys.getenv("CI") == "") {
   DROPBOX <- "./testing/"
 }
 
-library(quarto)
 quarto_render("current-data.qmd", execute_params = list(DROPBOX = DROPBOX))
-
+                                                        
 message("All done")
 
 #maybe SW will add: 
