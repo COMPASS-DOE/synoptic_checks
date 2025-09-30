@@ -372,11 +372,11 @@ if("TMP" %in% troll_long$Site) {
 
 troll_long %>% 
     filter(Site != "TMP") %>% 
-    mutate(Instrument_ID = substr(name, nchar(name), nchar(name))) %>% 
+    mutate(Instrument_ID = substr(Table, nchar(Table), nchar(Table))) %>% 
     # add TMP data back in
     bind_rows(troll_long_tmp) %>% 
     # remove "600" with optional A/B/C
-    mutate(name = gsub("600[ABC]?$", "", name)) %>%
+    mutate(name = gsub("[26]00[ABC]?$", "", name)) %>%
     # compute water level
     left_join(WELL_DIMS, by = c("Site", "Plot", "Instrument_ID")) %>% 
     # the join changes Plot back to character
