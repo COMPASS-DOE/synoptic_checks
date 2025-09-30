@@ -1,8 +1,8 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "C:/Users/wilsonsj/Smithsonian Dropbox/Stephanie Wilson"
-  SITES: "TMP"
+  DROPBOX: "./testing/"
+  SITES: "CB"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
@@ -26,7 +26,7 @@ theme_set(theme_bw())
 library(dplyr)
 library(tidyr)
 library(gt)
-library(gtfsio)
+#library(gtfsio)
 
 SITES <- params$SITES
 PATH <- params$DROPBOX
@@ -34,10 +34,12 @@ PATH <- params$DROPBOX
 PLOT_FACTOR_LEVELS <- c("C", "F", "S", "UP", "TR", "WTE", "W")
 
 # User can specify groups of synoptic sites: CB or LE
-if(SITES == "CB") {
-  SITES <- c("SWH", "GWI", "MSM", "GCW")
-} else if(SITES == "LE") {
-  SITES <- c("PTR", "CRC", "OWC")
+if(length(SITES == 1)) {
+  if(SITES == "CB") {
+    SITES <- c("SWH", "GWI", "MSM", "GCW", "TMP")
+  } else if(SITES == "LE") {
+    SITES <- c("PTR", "CRC", "OWC")
+  }
 }
 
 # Well dimensions, for computing water level below surface
@@ -85,7 +87,10 @@ message("Reading ", TEROS_CB_FILE)
 teros_cb <- read_csv(TEROS_CB_FILE, col_types = "cc_cddc")
 # TODO: where is LE file?
 teros_tmp %>% 
-  mutate(Site = "TMP") %>% 
+  mutate(Site = "TMP",
+         Plot = case_when(Plot == "Freshwater" ~ "F",
+                          Plot == "Seawater" ~ "S",
+                          Plot == "Control" ~ "C")) %>% 
   select(Site, Plot, Logger = `Data Logger ID`, Port = `Terosdata table channel`, ID, Depth_cm) %>% 
   bind_rows(teros_cb %>% select(Site, Plot = Zone, Logger, Port = Address, ID = `Probe ID`, Depth_cm = Depth)) %>% 
   mutate(Port = as.character(Port),
@@ -126,9 +131,10 @@ read_datalogger_file <- function(filename, quiet = TRUE, ...) {
     table_name <- header_split[length(header_split)]
 
     x <- read_csv(I(dat[-c(1, 3, 4)]), show_col_types = FALSE)
-    info <- tibble(Logger = rep(logger_name, nrow(x)),
-                   Table = rep(table_name, nrow(x)),
-                   Format = rep(format_name, nrow(x)))
+    x$Statname <- x$PB <- x$RECORD <- NULL # these are inconsistent and not useful
+    
+    info <- tibble(Logger_raw = rep(logger_name, nrow(x)),
+                   Table = rep(table_name, nrow(x)))
     as_tibble(cbind(info, x))
 }
 
@@ -142,49 +148,66 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
     if(site %in% c("PTR", "CRC", "OWC", "SWH", "GWI", "MSM", "GCW", "DLG")) {
       SUBPATH <- "COMPASS_PNNL_Data"
       CURRENT <- "current_data"
+      PATTERN <- paste0("_", site, "_.*_", type)
     } else if(site %in% c("TMP")) {
       SUBPATH <- "TEMPEST_PNNL_Data"
       CURRENT <- "Current_data" # you're killing me, Roy
+      PATTERN <- paste0("_", type)
     } else {
       stop("Unknown site: ", site)
     }
     
     files <- list.files(file.path(path, SUBPATH, CURRENT), 
-                        pattern = paste0("_", site, "_.*_", type),
+                        pattern = PATTERN,
+                        ignore.case = TRUE, # TMP has different capitalization
                         full.names = TRUE)
     filetext <- if_else(length(files) == 1, " file", " files")
     message(site, ": found ", length(files), filetext)
     
-   # x <- lapply(files, read_datalogger_file)
-   # sitedat[[site]] <- bind_rows(x)
     x <- lapply(files, read_datalogger_file)
-    x <- lapply(x, function(df) {
-    if ("Statname" %in% names(df)) {
-    df <- df %>% mutate(across(c(Statname, starts_with("Aquatroll")), as.character))
-     }
-    df
-      })
-    sitedat[[site]] <- bind_rows(x)
-
-  }
+    x <- bind_rows(x)
+#    x <- lapply(x, function(df) {
+#      if ("Statname" %in% names(df)) {
+#        df <- df %>% mutate(across(c(Statname, starts_with("Aquatroll")), as.character))
+#      }
+#      df
+#    })
+    if(nrow(x) == 0) next # no data!
+    
+    # Split "Logger_raw" field into "Site", "Plot", and "Logger"
+    if(site == "TMP") {
+      # The TMP data files have logger_raw with format PNNL_{LOGGER}
+      x %>% 
+        separate(Logger_raw, into = c("Site", "Logger"), remove = TRUE) %>% 
+        mutate(Site = "TMP",
+               Plot = case_when(Logger %in% c("11", "12", "13") ~ "C",
+                                Logger %in% c("21", "22", "23") ~ "F",
+                                Logger %in% c("31", "32", "33") ~ "S")) ->
+        x
+    } else {
+      # The synoptic sites have format Compass_{SITE}_{PLOT}_{LOGGER}
+      x %>% 
+        separate(Logger_raw, into = c("Junk", "Site", "Plot", "Logger"), remove = TRUE) %>%
+        select(-Junk) ->
+        x
+    }
+    
+    # Change Plot to a factor and reorder columns
+    x %>% mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS)) ->
+      x
+    left_cols <- c("Site", "Plot", "Logger", "Table")
+    x <- bind_cols(select(x, all_of(left_cols)), select(x, -all_of(left_cols)))
+    
+    sitedat[[site]] <- x
+    
+  } # for site
   bind_rows(sitedat, .id = "Site")
-}
-
-# Separate Campbell "Statname" column into useful infomration
-statname_separation <- function(x) {
-  x %>% 
-    # the GCW files' Statname column is slightly different format, which
-    # is why we need the extra="drop" parameter
-    separate(Statname, into = c("X", "Site_DL", "Plot"), extra = "drop") %>% 
-    select(-X) %>% 
-    mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS))
 }
 
 # Pivot wide Campbell format to long
 pivotstep <- function(x) {
   x %>% 
-    select(-Format, -RECORD) %>% 
-    pivot_longer(-1:-6) %>% 
+    pivot_longer(-1:-5) %>% 
     filter(name != "BattV_Avg") # we probably don't care about this
 }
 
@@ -202,6 +225,7 @@ robust_range <- function(x, digits) {
 
 ```{r sf-read}
 #| output: "asis"
+
 sf <- read_files("Sapflow")
 no_data_check(sf, "Sapflow")
 ```
@@ -211,12 +235,10 @@ no_data_check(sf, "Sapflow")
 if(nrow(sf) > 0) {
   sf %>% 
     pivotstep() %>% 
-    # parse out site and plot info
-    statname_separation() %>% 
-    mutate(PB = as.character(PB),
-           Port = gsub("DiffVolt._Avg\\(", "", name),
+    filter(grepl("DiffVolt.?_Avg", name)) %>%  # needed for TMP
+    mutate(Port = gsub("DiffVolt.?_Avg\\(", "", name),
            Port = as.double(gsub(")", "", Port))) %>%
-    left_join(SF_METADATA, by = c("Site",  "PB" = "Logger", "Port")) -> 
+    left_join(SF_METADATA, by = c("Site",  "Logger", "Port")) -> 
     sf_long
   
   for(site in unique(sf_long$Site)) {
@@ -265,15 +287,12 @@ no_data_check(teros, "TEROS")
 if(nrow(teros) > 0) {
   teros %>% 
     pivotstep() %>% 
-    # parse out site and plot info
-    statname_separation() %>% 
     # NA value is -99999.00
     mutate(value = if_else(value == -9999, NA_real_, value),
-           PB = as.character(PB),
-           name = gsub("Teros.\\(", "", name),
+           name = gsub("Teros.?\\(", "", name),
            name = gsub(")", "", name)) %>% 
     separate(name, into = c("Port", "sensor"), convert = FALSE) %>% 
-    left_join(TEROS_METADATA, by = c("Site", "Plot", "PB" = "Logger", "Port")) %>% 
+    left_join(TEROS_METADATA, by = c("Site", "Plot", "Logger", "Port")) %>% 
     filter(!is.na(ID)) %>% 
     # the join changes Plot back to character
     mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS)) %>% 
@@ -330,29 +349,53 @@ if(nrow(troll) > 0) {
     select(-starts_with("Aquatroll")) %>% # remove text column
     pivotstep() %>% 
     # NA value is -99999.00
-    mutate(value = if_else(value == -99999, NA_real_, value)) %>% 
-    # parse out site and plot info
-    statname_separation() %>% 
-    mutate(Instrument_ID = substr(name, nchar(name), nchar(name)),
-           name = substr(name, 1, nchar(name) - 1)) %>% 
+    mutate(value = if_else(value == -99999, NA_real_, value)) -> 
+    troll_long
+
+# Ugh, of course TMP trolls are totally different. Handle
+if("TMP" %in% troll_long$Site) {
+  troll_long %>% 
+    filter(Site == "TMP") %>% 
+    # hard coded, crappy, sorry
+    mutate(Instrument_ID = 
+             case_when(Logger == "12" & Table == "WaterLevel200" ~ "683451",
+                       Logger == "13" & Table == "WaterLevel600" ~ "685442",
+                       Logger == "21" & Table == "WaterLevel200" ~ "683416",
+                       Logger == "23" & Table == "WaterLevel200" ~ "683345",
+                       Logger == "23" & Table == "WaterLevel600" ~ "685474",
+                       Logger == "31" & Table == "WaterLevel200" ~ "683408",
+                       Logger == "32" & Table == "WaterLevel600" ~ "685410")) ->
+    troll_long_tmp
+} else {
+  troll_long_tmp <- NULL
+}
+
+troll_long %>% 
+    filter(Site != "TMP") %>% 
+    mutate(Instrument_ID = substr(Table, nchar(Table), nchar(Table))) %>% 
+    # add TMP data back in
+    bind_rows(troll_long_tmp) %>% 
+    # remove "600" with optional A/B/C
+    mutate(name = gsub("[26]00[ABC]?$", "", name)) %>%
     # compute water level
     left_join(WELL_DIMS, by = c("Site", "Plot", "Instrument_ID")) %>% 
     # the join changes Plot back to character
     mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS)) %>% 
     # filter per SW: WL, temp, salinity, DO, and pH
-    filter(name %in% c("Temperature600", "Salinity600", "RDO_concen600",
-                       "pH600", "Water_Density600", "Pressure600")) ->
+    filter(name %in% c("Temperature", "Salinity", "RDO_concen",
+                       "pH", "Water_Density", "Pressure")) ->
     troll_long
   
   # Compute water level. For each Site, Plot, and Instrument_ID, 
   # extract the pressure, density, and ground_to_sensor info (happily 
   # guaranteed to be same order and timestamps since from same instrument)
   troll_long %>% 
-    filter(name %in% c("Water_Density600", "Pressure600"), !is.na(value)) %>% 
+    filter(name %in% c("Water_Density", "Pressure"), !is.na(value)) %>% 
     pivot_wider(names_from = "name") %>% 
     # This follows Peter Regier's code, and Fausto M-S's logic
-    mutate(density_gcm3_cor = if_else(Water_Density600 >= 0.98 & Water_Density600 <= 1.05, Water_Density600, 1),
-           pressure_mbar = if_else(Pressure600 == -99999, 0, Pressure600),
+    mutate(density_gcm3_cor = if_else(Water_Density >= 0.98 & Water_Density <= 1.05, 
+                                      Water_Density, 1),
+           pressure_mbar = if_else(Pressure == -99999, 0, Pressure),
            pressurehead_m = (pressure_mbar * 100) / (density_gcm3_cor * 1000 * 9.80665),
            water_level_cm = round(100 * pressurehead_m - ground_to_sensor_cm, 1)) %>% 
     select(Site, Plot, Instrument_ID, TIMESTAMP, water_level_cm) -> 
@@ -404,6 +447,7 @@ troll_long %>%
 
 ```{r redox-read}
 #| output: "asis"
+#| eval: false
 redox <- read_files("Redox") 
 no_data_check(redox, "Redox")
 ```
