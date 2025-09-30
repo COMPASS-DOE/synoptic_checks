@@ -1,7 +1,7 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "~/Dropbox/"
+  DROPBOX: "./testing/"
   SITES: "CB"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
@@ -164,8 +164,6 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
     filetext <- if_else(length(files) == 1, " file", " files")
     message(site, ": found ", length(files), filetext)
     
-    # x <- lapply(files, read_datalogger_file)
-    # sitedat[[site]] <- bind_rows(x)
     x <- lapply(files, read_datalogger_file)
     x <- bind_rows(x)
 #    x <- lapply(x, function(df) {
@@ -174,6 +172,7 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
 #      }
 #      df
 #    })
+    if(nrow(x) == 0) next # no data!
     
     # Split "Logger_raw" field into "Site", "Plot", and "Logger"
     if(site == "TMP") {
@@ -185,7 +184,6 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
                                 Logger %in% c("21", "22", "23") ~ "F",
                                 Logger %in% c("31", "32", "33") ~ "S")) ->
         x
-
     } else {
       # The synoptic sites have format Compass_{SITE}_{PLOT}_{LOGGER}
       x %>% 
@@ -346,34 +344,58 @@ no_data_check(troll, "AquaTROLL")
 ```{r troll-plots}
 #| fig-width: 9
 #| fig-height: 4
-#| eval: false
 if(nrow(troll) > 0) {
   troll %>% 
     select(-starts_with("Aquatroll")) %>% # remove text column
     pivotstep() %>% 
     # NA value is -99999.00
-    mutate(value = if_else(value == -99999, NA_real_, value)) %>% 
-    mutate(Instrument_ID = substr(name, nchar(name), nchar(name)),
-           name = substr(name, 1, nchar(name) - 1)) %>% 
+    mutate(value = if_else(value == -99999, NA_real_, value)) -> 
+    troll_long
+
+# Ugh, of course TMP trolls are totally different. Handle
+if("TMP" %in% troll_long$Site) {
+  troll_long %>% 
+    filter(Site == "TMP") %>% 
+    # hard coded, crappy, sorry
+    mutate(Instrument_ID = 
+             case_when(Logger == "12" & Table == "WaterLevel200" ~ "683451",
+                       Logger == "13" & Table == "WaterLevel600" ~ "685442",
+                       Logger == "21" & Table == "WaterLevel200" ~ "683416",
+                       Logger == "23" & Table == "WaterLevel200" ~ "683345",
+                       Logger == "23" & Table == "WaterLevel600" ~ "685474",
+                       Logger == "31" & Table == "WaterLevel200" ~ "683408",
+                       Logger == "32" & Table == "WaterLevel600" ~ "685410")) ->
+    troll_long_tmp
+} else {
+  troll_long_tmp <- NULL
+}
+
+troll_long %>% 
+    filter(Site != "TMP") %>% 
+    mutate(Instrument_ID = substr(name, nchar(name), nchar(name))) %>% 
+    # add TMP data back in
+    bind_rows(troll_long_tmp) %>% 
+    # remove "600" with optional A/B/C
+    mutate(name = gsub("600[ABC]?$", "", name)) %>%
     # compute water level
     left_join(WELL_DIMS, by = c("Site", "Plot", "Instrument_ID")) %>% 
     # the join changes Plot back to character
     mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS)) %>% 
     # filter per SW: WL, temp, salinity, DO, and pH
-    filter(name %in% c("Temperature600", "Salinity600", "RDO_concen600",
-                       "pH600", "Water_Density600", "Pressure600")) ->
+    filter(name %in% c("Temperature", "Salinity", "RDO_concen",
+                       "pH", "Water_Density", "Pressure")) ->
     troll_long
   
   # Compute water level. For each Site, Plot, and Instrument_ID, 
   # extract the pressure, density, and ground_to_sensor info (happily 
   # guaranteed to be same order and timestamps since from same instrument)
   troll_long %>% 
-    filter(name %in% c("Water_Density600", "Pressure600"), !is.na(value)) %>% 
+    filter(name %in% c("Water_Density", "Pressure"), !is.na(value)) %>% 
     pivot_wider(names_from = "name") %>% 
     # This follows Peter Regier's code, and Fausto M-S's logic
-    mutate(density_gcm3_cor = if_else(Water_Density600 >= 0.98 & Water_Density600 <= 1.05, 
-                                      Water_Density600, 1),
-           pressure_mbar = if_else(Pressure600 == -99999, 0, Pressure600),
+    mutate(density_gcm3_cor = if_else(Water_Density >= 0.98 & Water_Density <= 1.05, 
+                                      Water_Density, 1),
+           pressure_mbar = if_else(Pressure == -99999, 0, Pressure),
            pressurehead_m = (pressure_mbar * 100) / (density_gcm3_cor * 1000 * 9.80665),
            water_level_cm = round(100 * pressurehead_m - ground_to_sensor_cm, 1)) %>% 
     select(Site, Plot, Instrument_ID, TIMESTAMP, water_level_cm) -> 
@@ -407,7 +429,6 @@ if(nrow(troll) > 0) {
 ```
 
 ```{r troll-tables}
-#| eval: false
 troll_long %>% 
   group_by(Site, Plot, name) %>% 
   summarise(N_sensor = length(unique(Instrument_ID)), 
