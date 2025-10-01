@@ -2,7 +2,7 @@
 author: "COMPASS workflows team"
 params:
   DROPBOX: "./testing/"
-  SITES: "CB"
+  SITES: "TMP"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
