@@ -4,7 +4,7 @@
 ## uggggly so gonna redesign to increase info content, make it nicer to look at, 
 ## and hopefully simpler to see key points right away.
 ##
-## Peter Regier, 2022-04-06 (uploaded to Github 2024-09-06)
+## pjr, 2022-04-06
 ##
 # ############## #
 # ############## #
@@ -28,10 +28,14 @@ p_load(tidyverse,
 # Set ggplot theme
 theme_set(theme_bw())
 
-## Set the GDrive folders to find files
-current_directory = "https://drive.google.com/drive/folders/1-1nAeF2hTlCNvg_TNbJC0t6QBanLuk6g"
-archive_directory = "https://drive.google.com/drive/folders/16zmJrgSm7OHBn-4bDWvvO9E8NeX92nrl"
+## Set the GDrive folders to find files - updated 9/11/24 after RR switched to new server
+#current_directory = "https://drive.google.com/drive/folders/1-1nAeF2hTlCNvg_TNbJC0t6QBanLuk6g"
+#archive_directory = "https://drive.google.com/drive/folders/16zmJrgSm7OHBn-4bDWvvO9E8NeX92nrl"
+#current_directory = "https://drive.google.com/drive/folders/1-C7KWbKBM9uUebEFs3Xsi-nZefjX6WOQ"
+current_directory = "/Users/regi350/Dropbox/COMPASS_PNNL_Data/current_data"
+archive_directory = "/Users/regi350/Dropbox/COMPASS_PNNL_Data/COMPASS_PNNL_Rawdata_Archive"
 
+## Switching current directory to Dropbox bc server keeps breaking
 ## Finally, set up some YYYYMM strings for this month and last month, to limit
 ## the number of files you have to import (will only become more useful as 
 ## datasets grow)
@@ -40,7 +44,7 @@ month_strings <- c(str_sub(str_replace_all(Sys.Date(), "-", ""), 1, 6),
 
 ## Finally, we're going to clean out the directory we're going to download our data
 ## to, so we can check later that we downloaded the same number of files that we found on GDrive
-raw_data_path <- "data/raw_from_gdrive/synoptic_troll/"
+raw_data_path <- "/Users/regi350/Library/CloudStorage/OneDrive-PNNL/Documents/projects/compass/synoptic/data/raw_from_gdrive/synoptic_troll/"
 
 ## Now, delete all these files (https://stackoverflow.com/questions/9296377/automatically-delete-files-folders)
 do.call(file.remove, list(list.files(raw_data_path, full.names = TRUE)))
@@ -51,56 +55,56 @@ do.call(file.remove, list(list.files(raw_data_path, full.names = TRUE)))
 ## This is KEY: it avoids user input, and will automatically find the token. 
 ## This has, I think, timed out before. If so, just run drive_auth() and select
 ## the proper email.
-options(gargle_oauth_email = "peter.regier@pnnl.gov")
+#options(gargle_oauth_email = "peter.regier@pnnl.gov")
 
 # Create a list of files (note that archive files get filtered so we don't read
 # eeeeeverything in)
-files_raw <- bind_rows(drive_ls(current_directory) %>% 
-                         filter(grepl("WaterLevel", name)), 
-                       drive_ls(archive_directory) %>% 
-                         filter(grepl("WaterLevel", name)) %>% 
-                         filter(grepl(paste(month_strings, collapse = "|"), name)))
+# files_raw <- bind_rows(#drive_ls(current_directory) %>% 
+#                          #filter(grepl("WaterLevel", name)), 
+#                        drive_ls(archive_directory) %>% 
+#                          filter(grepl("WaterLevel", name)) %>% 
+#                          filter(grepl(paste(month_strings, collapse = "|"), name)))
 
 
 ## Count the number of total files
-n_total_files = nrow(files_raw)
+#n_total_files = nrow(files_raw)
 
 ## Set up a theoretical site-list to check against
-site_locations <- expand_grid(site = c("CRC", "OWC", "PTR", "GCW", "GWI", "MSM", "SWH"), 
-            location = c("W", "TR", "UP")) 
+site_locations <- expand_grid(site = c("CRC", "OWC", "PTR", "GCW", "GWI", "MSM", "SWH"),
+            location = c("W", "TR", "UP"))
 
 ## calculate the number of files expected (one from current, one from archive)
-n_expected = nrow(site_locations) * 2
+#n_expected = nrow(site_locations) * 2
 
 ## First, check that all files are accounted for
-file_names <- files_raw %>% 
-  separate(name, c("project", "site", "location"), remove = F) %>% 
-  select(name, site, location, id)
+# file_names <- files_raw %>% 
+#   separate(name, c("project", "site", "location"), remove = F) %>% 
+#   select(name, site, location, id)
 
 ## Sanity checks
-missing_sites <- anti_join(site_locations, 
-                           file_names %>% select(site, location), 
-                           by = c("site", "location"))
+# missing_sites <- anti_join(site_locations, 
+#                            file_names %>% select(site, location), 
+#                            by = c("site", "location"))
 
 ## Create a custom function
-drive_download_ <- function(data){
-  
-  #message(paste("Downloading", data$name))
-  
-  drive_download(data$id, overwrite = T, path = paste0(raw_data_path, data$name))
-}
+# drive_download_ <- function(data){
+#   
+#   #message(paste("Downloading", data$name))
+#   
+#   drive_download(data$id, overwrite = T, path = paste0(raw_data_path, data$name))
+# }
 
 ## Create a function that won't crash if a given file won't read in
-safely_drive_download <- safely(drive_download_, NA)
+#safely_drive_download <- safely(drive_download_, NA)
 
 ## Use a for-loop to read in files in a way that I can see what's going on
 ## Download data to local. I tried to map() but for some reasons it doesn't work?
-for(i in 1:nrow(file_names)){
-  safely_drive_download(file_names %>% slice(i))
-}
+# for(i in 1:nrow(file_names)){
+#   safely_drive_download(file_names %>% slice(i))
+# }
 
 ## Last step before reading data: let's check if files read in match files expected
-files_not_downloaded <- setdiff(file_names$name, list.files(raw_data_path))
+#files_not_downloaded <- setdiff(file_names$name, list.files(raw_data_path))
 
 
 # 3. Read in data --------------------------------------------------------------
@@ -108,33 +112,63 @@ files_not_downloaded <- setdiff(file_names$name, list.files(raw_data_path))
 ## This function reads in and cleans up each file
 read_data <- function(data){
   
-  site <- str_split(data, "_", simplify = T)[,5]
-  location <- str_split(data, "_", simplify = T)[,6]
-  sensor <- str_split(data, "_", simplify = T)[,8]
+  filename <- str_replace(data, "^.*/", "")
+  site <- str_split(filename, "_", simplify = T)[,2]
+  location <- str_split(filename, "_", simplify = T)[,3]
+  sensor <- str_split(filename, "_", simplify = T)[,5]
   
-  read_delim(file = data, skip = 1) %>% 
-    slice(3:n()) %>% 
-    clean_names() %>% 
-    mutate(datetime = parsedate::parse_date(timestamp)) %>% 
-    filter(datetime > "2022-03-01") %>% 
-    mutate_at(vars(contains("600")), as.numeric) %>% 
-    rename_with(~str_remove(., '600[a-z]')) %>% 
-    rename("pressure_psi" = pressure) %>% 
-    mutate(pressure_mbar = pressure_psi * 68.948) %>% 
-    #separate(statname, c("project", "site", "location")) %>% 
-    mutate(site = site, 
-           location = location, 
-           sensor = sensor) %>% 
-    select(datetime, site, location, sensor, 
+  #message(paste(filename, site, location, sensor))
+  
+  #site <- str_split(data, "_", simplify = T)[,5]
+  #location <- str_split(data, "_", simplify = T)[,6]
+  #sensor <- str_split(data, "_", simplify = T)[,8]
+  
+  # site <- str_split(data, "_", simplify = T)[,5]
+  # location <- str_split(data, "_", simplify = T)[,6]
+  # sensor <- str_split(data, "_", simplify = T)[,8]
+  
+  read_delim(file = data, skip = 1) %>%
+    slice(3:n()) %>%
+    clean_names() %>%
+    mutate(datetime = parsedate::parse_date(timestamp)) %>%
+    filter(datetime > "2022-03-01") %>%
+    mutate_at(vars(contains("600")), as.numeric) %>%
+    rename_with(~str_remove(., '600[a-z]')) %>%
+    rename("pressure_psi" = pressure) %>%
+    mutate(pressure_mbar = pressure_psi * 68.948) %>%
+    #separate(statname, c("project", "site", "location")) %>%
+    mutate(site = site,
+           location = location,
+           sensor = sensor) %>%
+    select(datetime, site, location, sensor,
            temperature, salinity, rdo_concen, p_h, p_h_orp,
-           depth, water_density, pressure_mbar, pressure_psi, 
+           depth, water_density, pressure_mbar, pressure_psi,
            voltage_ext, battery_int)
 }
 
-## Read in data and bind to a single dataframe
-df_raw <- list.files(raw_data_path, full.names = T) %>% 
-  map(read_data) %>% 
+archive_raw <- list.files(archive_directory, full.names = T)[grepl("WaterLevel", list.files(archive_directory, full.names = T))]
+
+# Combine month strings into a single regex pattern
+month_pattern <- paste(month_strings, collapse = "|")
+
+# Filter the water level files to include only those that match the month strings
+archive_filtered <- archive_raw %>%
+  keep(~ grepl(month_pattern, .x)) %>% 
+  map(read_data) %>%
   bind_rows()
+
+archive_filtered
+
+current_raw <- list.files(current_directory, full.names = T)[grepl("WaterLevel", list.files(current_directory, full.names = T))] %>% 
+  map(read_data) %>%
+  bind_rows()
+
+read_data("/Users/regi350/Dropbox/COMPASS_PNNL_Data/current_data/Compass_SWH_TR_422_WaterLevel600B.dat")
+  
+df_raw <- bind_rows(archive_filtered, current_raw) %>% 
+  mutate(location = ifelse(site == "SWH" & grepl("600A", sensor), "SWAMP", location))
+
+df_raw
 
 
 # 4. Clean data (this is not QC) -----------------------------------------------
@@ -148,7 +182,8 @@ df_raw <- list.files(raw_data_path, full.names = T) %>%
 well_dimensions <- read_sheet("https://docs.google.com/spreadsheets/d/1O4sHvj2FO7EcWEm3WpKEZhFubGn8HCcUsz9EFXhQTXM/edit#gid=0") %>% 
   mutate(location = case_when(transect_location == "Upland" ~ "UP", 
                               transect_location == "Transition" ~ "TR", 
-                              transect_location == "Wetland" ~ "W"), 
+                              transect_location == "Wetland" ~ "W", 
+                              transect_location == "Swamp" ~ "SWAMP"), 
          ground_to_sensor_cm = ring_to_pressure_sensor_cm - (well_top_to_ground_cm - bolt_to_cap_cm)) %>% 
   dplyr::select(site, location, ground_to_sensor_cm)
 
@@ -161,32 +196,35 @@ df_raw_depths <- inner_join(df_raw, well_dimensions, by = c("site", "location"))
 ## 1.05 is upper bound
 df <- df_raw_depths %>% 
   mutate(density_gcm3_cor = ifelse(water_density >= 0.98 & water_density <= 1.05, water_density, 1), 
+         pressure_mbar = ifelse(pressure_psi == -99999, 0, pressure_mbar), 
          pressurehead_m = (pressure_mbar * 100) / (density_gcm3_cor * 1000 * 9.80665), 
          wl_below_surface_m = pressurehead_m - (ground_to_sensor_cm / 100)) %>% 
   ## This is a weird work-around: need to flag here so that we can easily match to spreadsheet
   mutate(flag_out_of_water = ifelse(wl_below_surface_m < ((ground_to_sensor_cm/100) * -1), TRUE,FALSE)) %>% 
   mutate(location = ifelse(site == "OWC" & location == "W", "WC", location), 
          location = ifelse(site == "OWC" & location == "UP", "WTE", location), 
-         location = ifelse(site == "SWH" & grepl("600A", sensor), "SWAMP", location)) %>% # https://github.com/COMPASS-DOE/data-workflows/issues/117
+         #location = ifelse(site == "SWH" & grepl("600A", sensor), "SWAMP", location)
+         ) %>% # https://github.com/COMPASS-DOE/data-workflows/issues/117
   mutate(location = fct_relevel(location, c("UP", "SWAMP", "TR", "WTE", "W", "WC"))) %>% 
   filter(datetime <= Sys.time())
 
 df_trim <- df %>% 
   filter(datetime > Sys.time() - days(7))
 
-ggplot(df, aes(pressure_mbar, pressurehead_m, color = ground_to_sensor_cm)) + 
-  geom_point() + 
-  geom_smooth(method = "lm", se = F)
-
+ggplot(df_trim, aes(datetime, temperature, color = location)) + 
+  geom_line() + 
+  facet_wrap(~site)
+ 
 summary(lm(pressure_mbar ~ pressurehead_m, data = df))
 
 #df_trim %>% ggplot(aes(temperature, site, fill = location)) + geom_boxplot()
+
 
 # 5. Automated QC --------------------------------------------------------------
 
 ## Set columns you want
 grouping_vars <- c("datetime", "site", "location", "flag_out_of_water")
-parameters <- c("wl_below_surface_m", "temperature", "salinity", "p_h", "do_mgl", "battery_int", "voltage_ext")
+parameters <- c("pressure_psi", "wl_below_surface_m", "temperature", "salinity", "p_h", "do_mgl", "battery_int", "voltage_ext")
 
 ## Create long dataframe
 df_long <- df_trim %>% 
@@ -207,7 +245,8 @@ df_qc <- df_long %>%
          flag_do = ifelse(name == "do_mgl" & value < -0.1 | 
                             name == "do_mgl" & value  > 20, TRUE, FALSE)) %>% 
   select(-flag_out_of_water) %>% 
-  mutate(flagged = ifelse(rowSums(select(., starts_with("flag"))) > 0, TRUE, FALSE))
+  mutate(flagged = ifelse(rowSums(select(., starts_with("flag"))) > 0, TRUE, FALSE)) %>% 
+  mutate(across(where(is.numeric), ~ ifelse(. == -99999, -1, .)))
 
 
 # 6. Create time-series plots --------------------------------------------------
@@ -217,7 +256,12 @@ no_days = 7
 
 ## set color palette
 location_colors = PNWColors::pnw_palette("Sunset", length(unique(df$location)))
-location_colors = c("#3B1F2B", "green2", "#DB162F", "#F4A261", "#5386E4", "#A7D49B")
+location_colors = c("UP" = "#3B1F2B", 
+                    "SWAMP" = "green2", 
+                    "TR" = "#DB162F", 
+                    "WTE" = "#F4A261", 
+                    "W" = "#5386E4", 
+                    "WC" = "#A7D49B")
 
 # ## This function creates standardized time-series plots 
 ts_plot <- function(var, y_lab){
@@ -251,11 +295,11 @@ ts_plots <- plot_grid(ts_pressure_plot,
 # 6. Create diagnostic plots ---------------------------------------------------
 
 ## Create a plot to calculate the proportion of possible data present
-df_trim <- df %>% 
+df_trim2 <- df_qc %>% 
   filter(datetime > Sys.time() - days(no_days))
 
-min_datetime = min(df_trim$datetime)
-max_datetime = max(df_trim$datetime)
+min_datetime = min(df_trim2$datetime)
+max_datetime = max(df_trim2$datetime)
 
 max_count <- length(seq(from = min_datetime, 
                         #to = force_tz(now(), tzone = "UTC"), by = "15 min"))
@@ -270,7 +314,8 @@ max_counts <- site_locations %>%
   mutate(location = fct_relevel(location, c("UP", "TR", "WTE", "W", "WC")))
 
 ## Make proportions plot
-prop_plot <- df_trim %>% 
+prop_plot <- df_trim2 %>% 
+  filter(name == "pressure_psi") %>% 
   group_by(site, location) %>% 
   count() %>%
   bind_rows(anti_join(max_counts, .)) %>% 
@@ -289,9 +334,10 @@ prop_plot <- df_trim %>%
   labs(x = "", y = "Percent", title = "Data transmission")
 
 ## Make battery voltage plot
-battery_plot <- df_trim %>% 
+battery_plot <- df_trim2 %>% 
+  filter(name == "battery_int") %>% 
   group_by(site, location) %>% 
-  dplyr::summarize(min = min(battery_int, na.rm = T)) %>% 
+  dplyr::summarize(min = min(value, na.rm = T)) %>% 
   bind_rows(anti_join(max_counts, .)) %>% 
   mutate(min = ifelse(is.na(min), 0, min)) %>% 
   mutate(theoretical = 100) %>% 
@@ -305,9 +351,10 @@ battery_plot <- df_trim %>%
   scale_fill_manual(values = location_colors) + 
   labs(x = "", y = "Percent (min.)", title = "Battery Power")
 
-power_plot <- df_trim %>% 
+power_plot <- df_trim2 %>% 
+  filter(name == "voltage_ext") %>% 
   group_by(site, location) %>% 
-  dplyr::summarize(min = min(voltage_ext, na.rm = T)) %>% 
+  dplyr::summarize(min = min(value, na.rm = T)) %>% 
   bind_rows(anti_join(max_counts, .)) %>% 
   mutate(min = ifelse(is.na(min), 0, min)) %>% 
   mutate(theoretical = 12) %>% 
@@ -345,4 +392,32 @@ export_location <- paste0("/Users/regi350/OneDrive - PNNL/Documents/projects/com
                           "synoptic_sensor_checkup_", 
                           str_remove_all(as.character(Sys.Date()), "-"), ".pdf")
 
-ggsave(export_location, width = 13, height = 13.5)
+ggsave(export_location, width = 16, height = 13.5)
+
+## Diagnostics output
+# n_total_files - total number of files found on drive matching criteria
+# n_expected - the files we expect
+# missing_sites - sites we expected that are missing
+# files_not_downloaded - files listed but now downloaded to local
+
+# 
+# missing_sites2 <- missing_sites %>% mutate(site_location = paste0(site, "_", location)) %>% 
+#   pull(site_location)
+
+## Adding a section to make separate plots by region per synoptic lead request
+df_qc
+
+## This function creates standardized time-series plots 
+ts_plot <- function(var, y_lab){
+  
+  x <- df_qc %>% filter(name == var)
+  
+  ggplot(x, aes(datetime, value, color = location)) +
+    geom_line() +
+    geom_point(data = x %>% filter(flagged == TRUE), color = "red", alpha = 0.5) +
+    facet_wrap(~site, nrow = 1, scales = "free_y") +
+    labs(x = "", y = y_lab) +
+    scale_color_manual(values = location_colors) +
+    scale_x_datetime(date_breaks = "3 days", date_labels = "%m/%d")
+}
+
