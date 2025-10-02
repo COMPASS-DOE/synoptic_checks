@@ -9,13 +9,16 @@ if(Sys.getenv("CI") == "") {
   # Normal usage
     message("Please select any file in Dropbox top level")
     DROPBOX <- dirname(file.choose())
+    SITES <- readline("Sites to plot: ")
 } else {
   # Running on GitHub Actions
   message("Running on GitHub Actions!")
   DROPBOX <- "./testing/"
+  SITES <- "TESTING"
 }
 
-quarto_render("current-data.qmd", execute_params = list(DROPBOX = DROPBOX))
+quarto_render("current-data.qmd", 
+              execute_params = list(DROPBOX = DROPBOX, SITES = SITES))
                                                         
 message("All done")
 
