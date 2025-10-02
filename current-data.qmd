@@ -1,8 +1,8 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "./testing/"
-  SITES: "TMP"
+  DROPBOX: "~/Dropbox"
+  SITES: "CB"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
@@ -36,9 +36,11 @@ PLOT_FACTOR_LEVELS <- c("C", "F", "S", "UP", "TR", "WTE", "W")
 # User can specify groups of synoptic sites: CB or LE
 if(length(SITES == 1)) {
   if(SITES == "CB") {
-    SITES <- c("SWH", "GWI", "MSM", "GCW", "TMP")
+    SITES <- c("SWH", "GWI", "MSM", "GCW")
   } else if(SITES == "LE") {
     SITES <- c("PTR", "CRC", "OWC")
+  } else if(SITES == "TESTING") {
+    SITES <- c("SWH", "GWI", "MSM", "GCW", "TMP")
   }
 }
 
