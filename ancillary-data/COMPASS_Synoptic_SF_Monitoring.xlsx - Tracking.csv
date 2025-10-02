@@ -1,0 +1,125 @@
+Site,Plot,Sapflux_ID,Tree_ID,Species,Logger,Port,PakBus,Installation_Date,Last_Checked,Status,Pending_Action,Notes
+PTR,UP,1,001,,313,1,313,15-Mar-2022,27-Jul-2024,Out of range,Check,
+PTR,UP,2,002,,313,2,313,15-Mar-2022,27-Jul-2024,Out of range,Check,
+PTR,UP,3,003,,313,3,313,15-Mar-2022,27-Jul-2024,Out of range,Check,
+PTR,UP,4,004,,313,4,313,15-Mar-2022,27-Jul-2024,Active,,
+PTR,UP,5,005,,313,5,313,15-Mar-2022,27-Jul-2024,out of range,Check,
+PTR,UP,6,006,,313,6,313,15-Mar-2022,27-Jul-2024,Active,,
+PTR,UP,7,007,,313,7,313,15-Mar-2022,27-Jul-2024,Active,,
+PTR,UP,8,550,,313,8,313,15-Mar-2022,27-Jul-2024,Active,,
+PTR,UP,01D,001,,313,9,313,15-Mar-2022,27-Jul-2024,Active,,
+PTR,UP,02D,002,,313,10,313,15-Mar-2022,27-Jul-2024,out of range,check,
+PTR,UP,03D,003,,313,11,313,15-Mar-2022,27-Jul-2024,out of range,check,
+PTR,UP,08D,550,,313,12,313,15-Mar-2022,27-Jul-2024,out of range,check,
+PTR,TR,1,556,,312,1,312,15-Mar-2022,27-Jul-2024,Active,,
+PTR,TR,2,555,,312,2,312,15-Mar-2022,27-Jul-2024,Active,,
+PTR,TR,3,554,,312,3,312,15-Mar-2022,27-Jul-2024,Active,,
+PTR,TR,4,553,,312,4,312,15-Mar-2022,27-Jul-2024,Active,,
+PTR,TR,5,552,,312,5,312,15-Mar-2022,27-Jul-2024,Active,,
+PTR,TR,6,012,,312,6,312,15-Mar-2022,27-Jul-2024,Active,,
+PTR,TR,7,551,,312,7,312,15-Mar-2022,27-Jul-2024,Out of range,Check,
+PTR,TR,8,557,,312,8,312,15-Mar-2022,27-Jul-2024,Out of range,Check,
+PTR,TR,01D,556,,312,9,312,15-Mar-2022,27-Jul-2024,Out of range,Check,
+PTR,TR,02D,552,,312,10,312,15-Mar-2022,27-Jul-2024,Out of range,Check,"Sensors 10,11,12 went down 11/5/22"
+PTR,TR,05D,555,,312,11,312,15-Mar-2022,27-Jul-2024,Out of range,Check,
+PTR,TR,07D,551,,312,12,312,15-Mar-2022,27-Jul-2024,Out of range,Check,
+CRC,TR,1,309,,302,1,302,16-Mar-2022,27-Jul-2024,Out of range,Check,Dead
+CRC,TR,2,327,,302,2,302,02-Sept-2022,27-Jul-2024,Out of range,Check,
+CRC,TR,3,311,,302,3,302,16-Mar-2022,27-Jul-2024,Out of range,Check,Dead
+CRC,TR,4,312,,302,4,302,16-Mar-2022,27-Jul-2024,Out of range,Check,
+CRC,TR,5,313,,302,5,302,19-Apr-2023,27-Jul-2024,Out of range,Check,
+CRC,TR,6,314,,302,6,302,16-Mar-2022,27-Jul-2024,Out of range,Check,
+CRC,TR,7,315,,302,7,302,16-Mar-2022,27-Jul-2024,Out of range,Check,
+CRC,TR,8,316,,302,8,302,16-Mar-2022,27-Jul-2024,Out of range,Check,
+CRC,TR,01D,309,,302,9,302,16-Mar-2022,27-Jul-2024,Out of range,Check,Dead
+CRC,TR,02D,327,,302,10,302,12-Aug-2022,27-Jul-2024,Out of range,Check,
+CRC,TR,03D,311,,302,11,302,16-Mar-2022,27-Jul-2024,Out of range,Check,Dead
+CRC,TR,04D,312,,302,12,302,26-Jul-2022,27-Jul-2024,Out of range,Check,
+OWC,UP,1,128,,323,1,323,17-Mar-2022,27-Jul-2024,NAN,Check,
+OWC,UP,2,120,,323,2,323,17-Mar-2022,27-Jul-2024,Out of range,Check,
+OWC,UP,3,121,,323,3,323,17-Mar-2022,27-Jul-2024,Out of range,Check,
+OWC,UP,4,123,,323,4,323,17-Mar-2022,27-Jul-2024,NAN,Check,
+OWC,UP,5,122,,323,5,323,17-Mar-2022,27-Jul-2024,NAN,Check,
+OWC,UP,6,124,,323,6,323,17-Mar-2022,27-Jul-2024,Active,,
+OWC,UP,7,126,,323,7,323,17-Mar-2022,27-Jul-2024,Active,,
+OWC,UP,8,127,,323,8,323,17-Mar-2022,27-Jul-2024,Active,,
+OWC,TR,1,128,,322,1,322,22-Apr-2022,27-Jul-2024,Active,,
+OWC,TR,2,120,,322,2,322,22-Apr-2022,27-Jul-2024,Active,,
+OWC,TR,3,121,,322,3,322,22-Apr-2022,27-Jul-2024,Active,,
+OWC,TR,4,123,,322,4,322,22-Apr-2022,27-Jul-2024,Active,,
+OWC,TR,5,122,,322,5,322,22-Apr-2022,27-Jul-2024,Active,,
+OWC,TR,6,124,,322,6,322,22-Apr-2022,27-Jul-2024,NAN,Check,
+OWC,TR,7,126,,322,7,322,22-Apr-2022,27-Jul-2024,Active,,
+OWC,TR,8,127,,322,8,322,22-Apr-2022,27-Jul-2024,NAN,Check,
+MSM,UP,1,401,,403,1,403,11-Apr-2022,22-Aug-2025,Active,,a bit high 1/10/23 - 7.117
+MSM,UP,2,402,,403,2,403,11-Apr-2022,22-Aug-2025,Active,,
+MSM,UP,3,403,,403,3,403,11-Apr-2022,22-Aug-2025,Active,,
+MSM,UP,4,404,,403,4,403,11-Apr-2022,22-Aug-2025,Active,,
+MSM,UP,5,405,,403,5,403,11-Apr-2022,22-Aug-2025,disconnected,replace,bad sensor 9/12/24
+MSM,UP,6,406,,403,6,403,11-Apr-2022,22-Aug-2025,Active,,
+MSM,UP,7,407,,403,7,403,11-Apr-2022,22-Aug-2025,Active,,
+MSM,UP,8,408,,403,8,403,11-Apr-2022,22-Aug-2025,Active,,
+MSM,UP,01D,401,,403,9,403,11-Apr-2022,22-Aug-2025,Active,,
+MSM,UP,02D,402,,403,10,403,11-Apr-2022,22-Aug-2025,Active,,
+MSM,UP,03D,403,,403,11,403,11-Apr-2022,22-Aug-2025,Active,,
+MSM,UP,04D,404,,403,12,403,11-Apr-2022,22-Aug-2025,Active,,
+MSM,TR,1,409,,402,1,402,11-Apr-2022,22-Aug-2025,Active,,dead
+MSM,TR,2,410,,402,2,402,11-Apr-2022,22-Aug-2025,Active,,
+MSM,TR,3,411,,402,3,402,11-Apr-2022,22-Aug-2025,Active,,
+MSM,TR,4,412,,402,4,402,11-Apr-2022,22-Aug-2025,Active,,
+MSM,TR,5,413,,402,5,402,11-Apr-2022,22-Aug-2025,Active,,dead
+MSM,TR,6,414,,402,6,402,11-Apr-2022,22-Aug-2025,Active,,
+MSM,TR,7,415,,402,7,402,11-Apr-2022,22-Aug-2025,Active,,
+MSM,TR,8,416,,402,8,402,11-Apr-2022,22-Aug-2025,Active,,
+MSM,TR,03D,411,,402,9,402,11-Apr-2022,22-Aug-2025,Active,,
+MSM,TR,04D,412,,402,10,402,11-Apr-2022,22-Aug-2025,Active,,
+MSM,TR,05D,413,,402,11,402,11-Apr-2022,22-Aug-2025,Active,,
+MSM,TR,07D,415,,402,12,402,11-Apr-2022,22-Aug-2025,disconnected,remove,
+GWI,UP,1,622,,413,1,413,13-Apr-2022,22-Aug-2025,Active,,sometimes daytime spikes high; spliced cable 11/9/23
+GWI,UP,2,642,,413,2,413,13-Apr-2022,22-Aug-2025,Active,,
+GWI,UP,3,633,,413,3,413,13-Apr-2022,22-Aug-2025,Active,,unplugged 3/7/24; cable damage; spliced 4/24/24
+GWI,UP,4,682,,413,4,413,13-Apr-2022,22-Aug-2025,Active,,SP noticed weird early morning spikey stuff 9/22; diconnected 11/17/22; sensor good - need to replace cable; cable replaced 3/30/23
+GWI,UP,5,683,,413,5,413,13-Apr-2022,22-Aug-2025,Active,,SP noticed weird early morning spikey stuff 9/22
+GWI,UP,6,677,,413,6,413,13-Apr-2022,22-Aug-2025,Active,,SP noticed weird early morning spikey stuff 9/22; a little spikey at night 8/25
+GWI,UP,7,650,,413,7,413,13-Apr-2022,22-Aug-2025,Active,,
+GWI,UP,8,647,,413,8,413,13-Apr-2022,22-Aug-2025,Active,,
+GWI,TR,1,786,,412,1,412,13-Apr-2022,22-Aug-2025,Active,,
+GWI,TR,2,782,,412,2,412,13-Apr-2022,22-Aug-2025,Active,,Dead 8/26/24
+GWI,TR,3,777,,412,3,412,13-Apr-2022,22-Aug-2025,Active,,
+GWI,TR,4,766,,412,4,412,13-Apr-2022,22-Aug-2025,Active,,
+GWI,TR,5,162,,412,5,412,13-Apr-2022,22-Aug-2025,Active,,Dead 8/26/24
+GWI,TR,6,163,,412,6,412,13-Apr-2022,22-Aug-2025,Active,,Dead 8/26/24
+GWI,TR,7,164,,412,7,412,13-Apr-2022,22-Aug-2025,Active,,Closed circuit on 5/5/22; observed dead 11/9/23
+GWI,TR,8,789,,412,8,412,13-Apr-2022,22-Aug-2025,Active,,Closed circuit on 5/5/22; observed dead 8/26/24
+GCW,TR,1,968,,432,1,432,1-Jun-2023; 7-Aug-2025,22-Aug-2025,Active,,bad 4/27/23; replaced 6/1/23; sensor pulled out by falling branch; replaced 8/7/25
+GCW,TR,2,719,,432,2,432,22-Jul-2021,22-Aug-2025,Active,,Double stemmed; Tree was eating probes; moved to north side7/22/21; lost second stem over winter 21/22
+GCW,TR,3,718,,432,3,432,,22-Aug-2025,Active,,8/7/25 cover box pulled top probe down; repositioned and seems ok
+GCW,TR,4,934,,432,4,432,,22-Aug-2025,Active,,
+GCW,TR,5,902,,432,5,432,20-Jul-2021,22-Aug-2025,Active,,
+GCW,TR,6,913,,432,6,432,,22-Aug-2025,Active,,
+GCW,TR,7,916,,432,7,432,12-Apr-2025,22-Aug-2025,Active,,
+GCW,TR,8,917,,432,8,432,12-Apr-2025; 7-Aug-2025,22-Aug-2025,Active,,replaced 8/7/25
+SWH,SWMP,1,538,,423,1,423,29-Mar-2023,22-Aug-2025,Active,,site off line 20230106
+SWH,SWMP,2,526,,423,2,423,29-Mar-2023,22-Aug-2025,Active,,
+SWH,SWMP,3,548,,423,3,423,29-Mar-2023,22-Aug-2025,Active,,
+SWH,SWMP,4,547,,423,4,423,29-Mar-2023,22-Aug-2025,disconnected,replace,bad 20250522
+SWH,SWMP,5,546,,423,5,423,29-Mar-2023,22-Aug-2025,Active,,
+SWH,SWMP,6,544,,423,6,423,29-Mar-2023,22-Aug-2025,Active,,
+SWH,SWMP,7,545,,423,7,423,29-Mar-2023; 13 Nov 2024,22-Aug-2025,Active,,bad sensor 10/22/24; need to replace; replaced 13 Nov 24
+SWH,SWMP,8,542,,423,8,423,29-Mar-2023,22-Aug-2025,Active,,
+SWH,SWMP,01D,538,,423,9,423,29-Mar-2023,22-Aug-2025,Active,,
+SWH,SWMP,02D,526,,423,10,423,29-Mar-2023,22-Aug-2025,Active,,
+SWH,SWMP,03D,548,,423,11,423,29-Mar-2023,22-Aug-2025,Active,,
+SWH,SWMP,08D,542,,423,12,423,29-Mar-2023,22-Aug-2025,Active,,
+SWH,TR,1,625,,422,1,422,28-Mar-2023,22-Aug-2025,Active,,bad sensor 9/25/24; replaced 10/24/24
+SWH,TR,2,645,,422,2,422,28-Mar-2023,22-Aug-2025,Active,,
+SWH,TR,3,613,,422,3,422,28-Mar-2023,22-Aug-2025,Active,,
+SWH,TR,4,602,,422,4,422,8-Nov-2023,22-Aug-2025,Active,,bad readings 6/30/23; new cable installed 10/18/23; new sensor 11/8/23
+SWH,TR,5,654,,422,5,422,28-Mar-2023,22-Aug-2025,Active,,bad readings 6/30/23
+SWH,TR,6,655,,422,6,422,28-Mar-2023,22-Aug-2025,Active,,bad readings 6/30/23
+SWH,TR,7,652,,422,7,422,18-Oct-2023,22-Aug-2025,disconnected,replace,bad readings 7/17/23; sensor replaced 10/18/23
+SWH,TR,8,653,,422,8,422,28-Mar-2023,22-Aug-2025,Active,,bad readings 7/17/23
+SWH,TR,01D,625,,422,9,422,28-Mar-2023,22-Aug-2025,Active,,bad readings 7/17/23
+SWH,TR,02D,645,,422,10,422,28-Mar-2023,22-Aug-2025,Active,,
+SWH,TR,04D,602,,422,11,422,28-Mar-2023,22-Aug-2025,Active,,
+SWH,TR,07D,652,,422,12,422,28-Mar-2023,22-Aug-2025,Active,,

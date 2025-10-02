@@ -1,0 +1,147 @@
+Plot,Grid Square,Junction Box ID,Address,ID,Depth_cm,Data Logger ID,Logger Station,Date Online (2020),Date of Last  Field Check,Field Status,Terosdata table channel
+Freshwater,B2,C3,a (8),T076,15,22,C5,5/14/21,2/15/2021,Responsive,1
+Freshwater,D2,E3,b,T077,15,22,C5,6/8/21,4/12/2021,Responsive,2
+Freshwater,D3,E3,c,T078,15,22,C5,6/8/21,2/15/2021,Responsive,3
+Freshwater,E3,E3,d,T053,15,22,C5,6/8/21,2/15/2021,Responsive,4
+Freshwater,B4,C5,e,T170,15,22,C5,5/4/21,2/15/2021,Responsive,5
+Freshwater,C4,C5,f,T172,15,22,C5,5/4/21,4/12/2021,Responsive,6
+Freshwater,D4,E5,g,T082,15,22,C5,4/29/21,2/15/2021,Responsive,7
+Freshwater,E4,E5,h,T083,15,22,C5,4/29/21,2/15/2021,Responsive,8
+Freshwater,C5,C5,i,T084,15,22,C5,5/4/21,2/15/2021,Responsive,9
+Freshwater,D5,E5,j,T169,15,22,C5,4/29/21,2/15/2021,Responsive,10
+Freshwater,E5,E5,k,T086,15,22,C5,4/29/21,2/15/2021,Responsive,11
+Freshwater,C3,C3,A (7),T171,5,22,C5,5/14/21,2/15/2021,Responsive,14
+Freshwater,C3,C3,B,T041,15,22,C5,5/14/21,2/15/2021,Responsive,15
+Freshwater,C3,C3,C,T168,30,22,C5,5/14/21,2/15/2021,Responsive,16
+,,,,,,,,,,,
+Freshwater,F2,G3,l,T012,15,21,G4,5/14/21,2/17/2021,Responsive,12
+Freshwater,H2,I3,m (9),T013,15,21,G4,4/29/21,2/17/2021,Responsive,13
+Freshwater,F3,G3,a (8),T001,15,21,G4,5/14/21,2/17/2021,Responsive,1
+Freshwater,G3,G3,b,T002,15,21,G4,5/14/21,2/17/2021,Responsive,2
+Freshwater,I3,I3,c,T003,15,21,G4,4/29/21,2/17/2021,Responsive,3
+Freshwater,G4,G5,d,T004,15,21,G4,6/8/21,2/17/2021,Responsive,4
+Freshwater,H4,I5,e,T005,15,21,G4,5/4/21,2/17/2021,Responsive,5
+Freshwater,F5,G5,f,T006,15,21,G4,6/8/21,2/17/2021,Responsive,6
+Freshwater,G5,G5,g,T007,15,21,G4,6/8/21,2/17/2021,Responsive,7
+Freshwater,H5,I5,h,T008,15,21,G4,5/4/21,2/17/2021,Responsive,8
+Freshwater,I5,I5,i,T009,15,21,G4,5/4/21,2/17/2021,Responsive,9
+Freshwater,H3,I3,D,T121,5,21,G4,4/29/21,2/17/2021,Responsive,17
+Freshwater,H3,I3,E,T122,15,21,G4,4/29/21,2/17/2021,Responsive,18
+Freshwater,H3,I3,F,T123,30,21,G4,4/29/21,2/17/2021,Responsive,19
+Freshwater,F4,G5,G,T124,5,21,G4,6/8/21,2/17/2021,Responsive,20
+Freshwater,F4,G5,H,T125,15,21,G4,6/8/21,2/17/2021,Responsive,21
+Freshwater,F4,G5,I,T126,30,21,G4,6/8/21,2/17/2021,Responsive,22
+,,,,,,,,,,,
+Freshwater,B6,C7,j,T183,15,23,F7,5/14/21,2/17/2021,Responsive,10
+Freshwater,D6,E7,k,T011,15,23,F7,4/22/21,2/17/2021,Responsive,11
+Freshwater,E6,E7,l,T025,15,23,F7,4/22/21,2/17/2021,Responsive,12
+Freshwater,F6,G7,m (9),T026,15,23,F7,4/29/21,2/17/2021,Responsive,13
+Freshwater,G6,G7,a (8),T014,15,23,F7,4/29/21,2/17/2021,Responsive,1
+Freshwater,C7,C7,c,T016,15,23,F7,5/14/21,2/17/2021,Responsive,3
+Freshwater,E7,E7,b,T015,15,23,F7,4/22/21,2/17/2021,Responsive,2
+Freshwater,G7,G7,d,T017,15,23,F7,4/29/21,2/17/2021,Responsive,4
+Freshwater,I7,I7,e,T018,15,23,F7,5/4/21,2/17/2021,Responsive,5
+Freshwater,C6,C7,A (7),T118,5,23,F7,5/14/21,2/17/2021,Responsive,14
+Freshwater,C6,C7,B,T119,15,23,F7,5/14/21,2/17/2021,Responsive,15
+Freshwater,C6,C7,C,T120,30,23,F7,5/14/21,2/17/2021,Responsive,16
+Freshwater,H6,I7,D,T043,5,23,F7,5/4/21,2/17/2021,Responsive,17
+Freshwater,H6,I7,E,T044,15,23,F7,5/4/21,2/17/2021,Responsive,18
+Freshwater,H6,I7,F,T163,30,23,F7,5/4/21,2/17/2021,Responsive,19
+,,,,,,,,,,,
+Seawater,B2,C3,a (8),T027,15,31,C4,6/8/21,2/17/2021,Responsive,1
+Seawater,D2,E3,b,T028,15,31,C4,5/4/21,2/17/2021,Responsive,2
+Seawater,D3,E3,c,T029,15,31,C4,5/4/21,2/17/2021,Responsive,3
+Seawater,E3,E3,d,T030,15,31,C4,5/4/21,2/17/2021,Responsive,4
+Seawater,B4,C5,e,T031,15,31,C4,4/30/21,2/17/2021,Responsive,5
+Seawater,C4,C5,f,T032,15,31,C4,4/30/21,2/17/2021,Responsive,6
+Seawater,D4,E5,g,T020,15,31,C4,5/14/21,2/17/2021,Responsive,7
+Seawater,E4,E5,h,T021,15,31,C4,5/14/21,2/17/2021,Responsive,8
+Seawater,C5,C5,i,T022,15,31,C4,4/30/21,2/17/2021,Responsive,9
+Seawater,D5,E5,j,T023,15,31,C4,5/14/21,2/17/2021,Responsive,10
+Seawater,E5,E5,k,T024,15,31,C4,5/14/21,2/17/2021,Responsive,11
+Seawater,C3,C3,A (8),T089,5,31,C4,6/8/21,2/17/2021,Responsive,14
+Seawater,C3,C3,B,T090,15,31,C4,6/8/21,2/17/2021,Responsive,15
+Seawater,C3,C3,C,T091,30,31,C4,6/8/21,2/17/2021,Responsive,16
+,,,,,,,,,,,
+Seawater,F2,G3,l,T087,15,33,F4,5/14/21,2/23/2021,Responsive,12
+Seawater,H2,I3,m (9),T088,15,33,F4,5/4/21,2/23/2021,Responsive,13
+Seawater,F3,G3,a (8),T167,15,33,F4,5/14/21,2/23/2021,Responsive,1
+Seawater,G3,G3,b,T165,15,33,F4,5/14/21,2/23/2021,Responsive,2
+Seawater,I3,I3,c,T065,15,33,F4,5/4/21,2/23/2021,Responsive,3
+Seawater,G4,G5,d,T161,15,33,F4,6/8/21,2/23/2021,Responsive,4
+Seawater,H4,I5,e,T067,15,33,F4,4/29/21,2/23/2021,Responsive,5
+Seawater,F5,G5,f,T068,15,33,F4,6/8/21,2/23/2021,Responsive,6
+Seawater,G5,G5,g,T069,15,33,F4,6/8/21,2/23/2021,Responsive,7
+Seawater,H5,I5,h,T070,15,33,F4,4/29/21,2/23/2021,Responsive,8
+Seawater,I5,I5,i,T071,15,33,F4,4/29/21,2/23/2021,Responsive,9
+Seawater,H3,I3,D,T092,5,33,F4,5/4/21,2/23/2021,Responsive,17
+Seawater,H3,I3,E,T093,15,33,F4,5/4/21,2/23/2021,Responsive,18
+Seawater,H3,I3,F,T094,30,33,F4,5/4/21,2/23/2021,Responsive,19
+Seawater,F4,G5,G,T046,5,33,F4,6/8/21,2/23/2021,Responsive,20
+Seawater,F4,G5,H,T047,15,33,F4,6/8/21,2/23/2021,Responsive,21
+Seawater,F4,G5,I,T048,30,33,F4,6/8/21,2/23/2021,Responsive,22
+,,,,,,,,,,,
+Seawater,B6,C7,j,T072,15,32,E7,5/4/21,2/23/2021,Responsive,10
+Seawater,D6,E7,k,T073,15,32,E7,5/14/21,2/23/2021,Responsive,11
+Seawater,E6,E7,l,T038,15,32,E7,5/14/21,2/23/2021,Responsive,12
+Seawater,F6,G7,m (9),T075,15,32,E7,6/8/21,2/23/2021,Responsive,13
+Seawater,G6,G7,a (8),T050,15,32,E7,6/8/21,2/23/2021,Responsive,1
+Seawater,C7,C7,b,T051,15,32,E7,5/4/21,2/23/2021,Responsive,2
+Seawater,E7,E7,c,T178,15,32,E7,5/14/21,2/23/2021,Responsive,3
+Seawater,G7,G7,d,T102,15,32,E7,6/8/21,2/23/2021,Responsive,4
+Seawater,I7,I7,e,T164,15,32,E7,4/30/21,4/12/2021,Responsive,5
+Seawater,C6,C7,A (7),T105,5,32,E7,5/4/21,2/23/2021,Responsive,14
+Seawater,C6,C7,B,T049,15,32,E7,5/4/21,2/23/2021,Responsive,15
+Seawater,C6,C7,C,T098,30,32,E7,5/4/21,2/23/2021,Responsive,16
+Seawater,H6,I7,D,T106,5,32,E7,4/30/21,2/23/2021,Responsive,17
+Seawater,H6,I7,E,T096,15,32,E7,4/30/21,2/23/2021,Responsive,18
+Seawater,H6,I7,F,T128,30,32,E7,4/30/21,2/23/2021,Responsive,19
+,,,,,,,,,,,
+Control,B2,C3,a (8),T135,15,11,D4,6/8/21,2/23/2021,Responsive,1
+Control,D2,E3,b,T187,15,11,D4,Apr-31,2/23/2021,replaced,2
+Control,D3,E3,c,T132,15,11,D4,Apr-31,2/23/2021,Responsive,3
+Control,E3,E3,d,T160,15,11,D4,Apr-31,2/23/2021,Responsive,4
+Control,B4,C5,e,T179 (old),15,11,D4,5/4/21,2/23/2021,replaced,5
+Control,C4,C5,f,T019,15,11,D4,5/4/21,2/23/2021,Responsive,6
+Control,D4,E5,g,T056,15,11,D4,5/14/21,2/23/2021,Responsive,7
+Control,E4,E5,h,T129,15,11,D4,5/14/21,2/23/2021,Responsive,8
+Control,C5,C5,i,T058,15,11,D4,5/4/21,2/23/2021,Responsive,9
+Control,D5,E5,j,T162,15,11,D4,5/14/21,2/23/2021,Responsive,10
+Control,E5,E5,k,T060,15,11,D4,5/14/21,2/23/2021,Responsive,11
+Control,C3,C3,A (7),T138,5,11,D4,6/8/21,2/23/2021,Responsive,14
+Control,C3,C3,B,T055,15,11,D4,6/8/21,2/23/2021,Responsive,15
+Control,C3,C3,C,T101,30,11,D4,6/8/21,2/23/2021,Responsive,16
+,,,,,,,,,,,
+Control,F2,G3,l,T110,15,13,F4,6/10/21,2/23/2021,Responsive,12
+Control,H2,I3,m (9),T182,15,13,F4,6/10/21,2/23/2021,responsive,13
+Control,F3,G3,a (8),T189,15,13,F4,6/10/21,2/23/2021,Responsive,1
+Control,G3,G3,b,T113,15,13,F4,6/10/21,2/23/2021,Responsive,2
+Control,I3,I3,c,T186,15,13,F4,6/8/21,2/23/2021,Responsive,3
+Control,G4,G5,d,T175,15,13,F4,6/10/21,2/23/2021,Responsive,4
+Control,H4,I5,e,T103,15,13,F4,6/10/21,2/23/2021,Responsive,5
+Control,F5,G5,f,T184,15,13,F4,6/10/21,2/23/2021,Responsive,6
+Control,G5,G5,g,T166,15,13,F4,6/10/21,2/23/2021,Responsive,7
+Control,H5,I5,h,T057,15,13,F4,6/10/21,2/23/2021,Responsive,8
+Control,I5,I5,i,T035,15,13,F4,6/10/21,2/23/2021,Responsive,9
+Control,H3,I3,D,T174,5,13,F4,6/8/21,2/23/2021,Responsive,17
+Control,H3,I3,E,T190,15,13,F4,6/8/21,2/23/2021,Responsive,18
+Control,H3,I3,F,T173,30,13,F4,6/8/21,2/23/2021,Responsive,19
+Control,F4,G5,G,T177,5,13,F4,6/10/21,2/23/2021,Responsive,20
+Control,F4,G5,H,T039,15,13,F4,6/10/21,2/23/2021,Responsive,21
+Control,F4,G5,I,T188,30,13,F4,6/10/21,2/23/2021,Responsive,22
+,,,,,,,,,,,
+Control,B6,C7,j,T180,15,12,B6,5/4/21,2/23/2021,Responsive,10
+Control,D6,E7,k,T037,15,12,B6,6/8/21,2/23/2021,Responsive,11
+Control,E6,E7,l,T074,15,12,B6,6/8/21,2/23/2021,Responsive,12
+Control,F6,G7,m,T062,15,12,B6,6/10/21,2/23/2021,Responsive,13
+Control,G6,G7,a (8),T112,15,12,B6,5/4/21,2/23/2021,Responsive,1
+Control,C7,C7,b,T181,15,12,B6,6/10/21,2/23/2021,Responsive,2
+Control,E7,E7,c,T114,15,12,B6,6/8/21,2/23/2021,Responsive,3
+Control,G7,G7,d,T115,15,12,B6,6/10/21,2/23/2021,Responsive,4
+Control,I7,I7,e,T116,15,12,B6,6/10/21,2/23/2021,Responsive,5
+Control,C6,C7,A (7),T108,5,12,B6,5/4/21,2/23/2021,Responsive,14
+Control,C6,C7,B,T185,15,12,B6,5/4/21,2/23/2021,Responsive,15
+Control,C6,C7,C,T079,30,12,B6,5/4/21,2/23/2021,Responsive,16
+Control,H6,I7,D,T131,5,12,B6,6/10/21,2/23/2021,Responsive,17
+Control,H6,I7,E,T034,15,12,B6,6/10/21,2/23/2021,Responsive,18
+Control,H6,I7,F,T127,30,12,B6,6/10/21,2/23/2021,Responsive,19
