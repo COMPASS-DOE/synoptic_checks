@@ -346,7 +346,6 @@ no_data_check(troll, "AquaTROLL")
 #| fig-height: 4
 if(nrow(troll) > 0) {
   troll %>% 
-    #head() %>%
     select(-starts_with("Aquatroll")) %>% # remove text column
     pivotstep() %>% 
     # NA value is -99999.00
