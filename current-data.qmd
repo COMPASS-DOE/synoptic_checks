@@ -346,6 +346,7 @@ no_data_check(troll, "AquaTROLL")
 #| fig-height: 4
 if(nrow(troll) > 0) {
   troll %>% 
+    #head() %>%
     select(-starts_with("Aquatroll")) %>% # remove text column
     pivotstep() %>% 
     # NA value is -99999.00
@@ -391,6 +392,11 @@ troll_long %>%
   # guaranteed to be same order and timestamps since from same instrument)
   troll_long %>% 
     filter(name %in% c("Water_Density", "Pressure"), !is.na(value)) %>% 
+    # Sometimes (not totally sure why) there's more than one value per timestep
+    # average those away
+    group_by(Site, Plot, Logger, Table, TIMESTAMP, name, Instrument_ID, 
+             ground_to_sensor_cm) %>%
+    summarise(value = mean(value, na.rm = TRUE), .groups = "drop") %>%
     pivot_wider(names_from = "name") %>% 
     # This follows Peter Regier's code, and Fausto M-S's logic
     mutate(density_gcm3_cor = if_else(Water_Density >= 0.98 & Water_Density <= 1.05, 
