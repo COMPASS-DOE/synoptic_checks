@@ -120,14 +120,16 @@ df_bin <- df_recent %>%
   mutate(datetime = round_date(datetime, "15 min")) %>% ## There are some temporal
   ## shenanigans, for this plot round everything to 15-min intervales
   group_by(datetime, site, sensor, ref) %>% 
-  summarize(redox_mv = mean(redox_mv)) %>% 
+  summarize(redox_mv = mean(redox_mv)) %>%  # Lose depth here - that's ok, will bring in below
   mutate(sensor = as.numeric(sensor)) %>% 
   ungroup() 
 
-df_bin %>% 
+missing_data <- df_bin %>% 
   group_by(site, sensor, ref) %>% 
   count() %>% 
-  mutate(percent_of_data = (n / max_count) * 100) %>% 
+  mutate(percent_of_data = (n / max_count) * 100) 
+
+missing_data %>% 
   filter(percent_of_data < 99) %>% # only include sensors missing >1%
   ggplot(aes(as.factor(sensor), percent_of_data, fill = as.factor(sensor))) + 
   geom_col(position = "dodge", width = 0.7, color = NA) + 
@@ -147,18 +149,54 @@ df_qc <- df_bin %>%
                                  TRUE ~ NA))
 
 # 7. Flagged data --------------------------------------------------------------
-
-df_qc %>% 
-  filter(flag_high_v == "High mV") %>% 
+flagged_data <- df_qc %>%
   group_by(site, sensor, ref) %>% 
-  count() %>% 
-  mutate(percent_flagged = (n / max_count) * 100) %>% 
+  summarize(total_count = n(), 
+    high_mv_count = sum(flag_high_v == "High mV", na.rm = TRUE), 
+    percent_flagged = (high_mv_count / total_count) * 100)
+
+flagged_data %>% 
   filter(percent_flagged > 1) %>% # only include sensors with >1% sus data
   ggplot(aes(as.factor(sensor), percent_flagged, fill = as.factor(sensor))) + 
   geom_col(position = "dodge", width = 0.7, color = NA) + 
   facet_wrap(~site, nrow = 1, scales = "free_x")
 
 
+# 8. Diagnostics plot ----------------------------------------------------------
+
+## I'd like to combine the various diagnostics above into a single, simple, 
+## visual assessment of how each sensor is doing. That will take some data
+## manipulation but will (hopefully) be worth it
+
+group_vars = c("site", "sensor", "ref")
+
+diagnostics <- expand_grid(site = unique(df_qc$site), 
+            sensor = as.numeric(c(1:24)), 
+            ref = c("ra", "rb")) %>% 
+  left_join(flagged_data %>% dplyr::select(all_of(group_vars), percent_flagged), by = group_vars) %>% 
+  left_join(missing_data %>% dplyr::select(all_of(group_vars), percent_of_data), by = group_vars) %>% 
+  left_join(number_to_depth %>% mutate(sensor = as.numeric(sensor)), by = "sensor") %>% 
+  mutate(diagnostic = case_when(percent_flagged <= 1 & percent_of_data > 99 ~ "Good", 
+                                percent_flagged > 1 ~ "Sus values", 
+                                percent_of_data < 99 ~ "Data gaps", 
+                                TRUE ~ "No data")) %>% 
+  mutate(row = ceiling(sensor / 4)) #helper column to organize
+  
+# Define custom colors for each category level
+custom_colors <- c("Good" = "forestgreen", 
+                   "Sus values" = "red", 
+                   "Data gaps" = "orange", 
+                   "No data" = "gray")
+
+diagnostics %>% 
+  ggplot(aes(row, as.factor(depth_cm), fill = diagnostic)) + 
+  geom_tile() + 
+  geom_text(aes(label = sensor), color = "black", size = 4) + 
+  facet_grid(site~ref) + 
+  scale_fill_manual(values = custom_colors) + 
+  scale_y_discrete(limits = c("40", "30", "20", "10")) +  
+  ggtitle("Flags: Sus values = >1% >1500 mV, Data gaps = <99% of values present") 
+ggsave("figures/251014_DLG_redox_diagnostics.png", width = 9, height = 9)
 
 
 
