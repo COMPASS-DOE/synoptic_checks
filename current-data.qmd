@@ -1,7 +1,7 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "./testing/"
+  DROPBOX: "C:/Users/wilsonsj/Smithsonian Dropbox/Stephanie Wilson"
   SITES: "CB"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
@@ -18,6 +18,7 @@ editor: visual
 ---
 
 ```{r init}
+#./testing/
 #| include: false
 
 library(readr)
@@ -298,9 +299,9 @@ if(nrow(teros) > 0) {
     mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS)) %>% 
     mutate(Depth_cm = as.factor(Depth_cm),
            sensor_name = case_when(
-             sensor == "1" ~ "EC",
+             sensor == "1" ~ "VWC",
              sensor == "2" ~ "Temp",
-             sensor == "3" ~ "VWC"
+             sensor == "3" ~ "EC"
            )) -> 
     teros_long
   
