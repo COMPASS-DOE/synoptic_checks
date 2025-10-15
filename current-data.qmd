@@ -2,7 +2,7 @@
 author: "COMPASS workflows team"
 params:
   DROPBOX: "/Users/bpbond/Library/CloudStorage/Dropbox/"
-  SITES: "OWC"
+  SITES: "LE"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
