@@ -18,7 +18,6 @@ editor: visual
 ---
 
 ```{r init}
-#./testing/
 #| include: false
 
 library(readr)
@@ -252,10 +251,6 @@ if(nrow(sf) > 0) {
       ggtitle(site)
     print(p)
   }
-  
-  # if(any(sf_long$value < 0) || any(sf_long$value > 1)) {
-  #   print(p + ylim(c(0, 1)) + ggtitle("Sapflow (in-range data only)"))
-  # }
 }
 ```
 
@@ -437,18 +432,20 @@ troll_long %>%
 ```
 
 ```{r troll-tables}
-troll_long %>% 
-  group_by(Site, Plot, name) %>% 
-  summarise(N_sensor = length(unique(Instrument_ID)), 
-            Mean = mean(value, na.rm = TRUE), 
-            SD = sd(value, na.rm = TRUE), 
-            Range = robust_range(value, 3),
-            N_values = n(), 
-            N_na = sum(is.na(value)), 
-            .groups = "drop") %>% 
-  gt(groupname_col = "Site", row_group_as_column = TRUE) %>%
-  fmt_number(columns = c("Mean", "SD"), decimals = 1) %>% 
-  fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
+if(nrow(troll) > 0) {
+  troll_long %>% 
+    group_by(Site, Plot, name) %>% 
+    summarise(N_sensor = length(unique(Instrument_ID)), 
+              Mean = mean(value, na.rm = TRUE), 
+              SD = sd(value, na.rm = TRUE), 
+              Range = robust_range(value, 3),
+              N_values = n(), 
+              N_na = sum(is.na(value)), 
+              .groups = "drop") %>% 
+    gt(groupname_col = "Site", row_group_as_column = TRUE) %>%
+    fmt_number(columns = c("Mean", "SD"), decimals = 1) %>% 
+    fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
+}
 ```
 
 # Redox
