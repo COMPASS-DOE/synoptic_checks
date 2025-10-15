@@ -138,9 +138,9 @@ read_datalogger_file <- function(filename, quiet = TRUE, ...) {
     # Remove inconsistent and/or not useful columns
     x$Statname <- x$PB <- x$RECORD <- NULL
     # Some Aquatroll tables (specifically at OWC; see e.g. #21) have blank
-    # tables, and their "Aquatroll_IDx" columns get parsed as numeric,
-    # which causes errors at the bind_rows() step below. Fix this
-    fixcol <- grep("Aquatroll_ID", colnames(x), ignore.case = TRUE)
+    # tables, and their "Aquatroll_IDx" columns get parsed as numeric, which
+    # causes errors at the bind_rows() step below. Pre-emptively fix this
+    fixcol <- grep("^Aquatroll_ID", colnames(x))
     if(length(fixcol) > 0) x[fixcol] <- as.character(x[fixcol])
     
     info <- tibble(Logger_raw = rep(logger_name, nrow(x)),
