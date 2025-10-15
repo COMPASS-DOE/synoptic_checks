@@ -40,7 +40,7 @@ if(length(SITES == 1)) {
   } else if(SITES == "LE") {
     SITES <- c("PTR", "CRC", "OWC")
   } else if(SITES == "TESTING") {
-    SITES <- c("SWH", "GWI", "MSM", "GCW", "TMP")
+    SITES <- c("SWH", "GWI", "MSM", "GCW", "TMP", "OWC")
   }
 }
 
@@ -132,8 +132,16 @@ read_datalogger_file <- function(filename, quiet = TRUE, ...) {
     logger_name <- header_split[2] # second field of row 1
     table_name <- header_split[length(header_split)]
 
-    x <- read_csv(I(dat[-c(1, 3, 4)]), show_col_types = FALSE)
-    x$Statname <- x$PB <- x$RECORD <- NULL # these are inconsistent and not useful
+    x <- read_csv(I(dat[-c(1, 3, 4)]), 
+                  show_col_types = FALSE, 
+                  na = c("NAN", "-99999"))
+    # Remove inconsistent and/or not useful columns
+    x$Statname <- x$PB <- x$RECORD <- NULL
+    # Some Aquatroll tables (specifically at OWC; see e.g. #21) have blank
+    # tables, and their "Aquatroll_IDx" columns get parsed as numeric,
+    # which causes errors at the bind_rows() step below. Fix this
+    fixcol <- grep("Aquatroll_ID", colnames(x), ignore.case = TRUE)
+    if(length(fixcol) > 0) x[fixcol] <- as.character(x[fixcol])
     
     info <- tibble(Logger_raw = rep(logger_name, nrow(x)),
                    Table = rep(table_name, nrow(x)))
@@ -165,7 +173,6 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
                         full.names = TRUE)
     filetext <- if_else(length(files) == 1, " file", " files")
     message(site, ": found ", length(files), filetext)
-    
     x <- lapply(files, read_datalogger_file)
     x <- bind_rows(x)
 #    x <- lapply(x, function(df) {
