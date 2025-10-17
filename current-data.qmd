@@ -1,8 +1,8 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "/Users/bpbond/Library/CloudStorage/Dropbox/"
-  SITES: "LE"
+  DROPBOX: "~/Dropbox/"
+  SITES: "DLG"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
@@ -30,7 +30,9 @@ library(gt)
 SITES <- params$SITES
 PATH <- params$DROPBOX
 
-PLOT_FACTOR_LEVELS <- c("C", "F", "S", "UP", "TR", "WTE", "W")
+PLOT_FACTOR_LEVELS <- c("C", "F", "S",                # TMP plots
+                        "UP", "TR", "WTE", "W",       # synoptic plots
+                        "F1", "F2", "F3", "R1", "R2") # DLG plots
 
 # User can specify groups of synoptic sites: CB or LE
 if(length(SITES == 1)) {
@@ -154,11 +156,15 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
   sitedat <- list()
   for(site in sitelist) {
     # Figure out where this site's files are
-    if(site %in% c("PTR", "CRC", "OWC", "SWH", "GWI", "MSM", "GCW", "DLG")) {
+    if(site == "DLG") {
+      SUBPATH <- "COMPASS_PNNL_Data"
+      CURRENT <- "current_data"
+      PATTERN <- paste0(site, "-.*_[0-9]+_", type)
+    } else if(site %in% c("PTR", "CRC", "OWC", "SWH", "GWI", "MSM", "GCW")) {
       SUBPATH <- "COMPASS_PNNL_Data"
       CURRENT <- "current_data"
       PATTERN <- paste0("_", site, "_.*_", type)
-    } else if(site %in% c("TMP")) {
+    } else if(site == "TMP") {
       SUBPATH <- "TEMPEST_PNNL_Data"
       CURRENT <- "Current_data" # you're killing me, Roy
       PATTERN <- paste0("_", type)
@@ -177,7 +183,12 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
     if(nrow(x) == 0) next # no data!
     
     # Split "Logger_raw" field into "Site", "Plot", and "Logger"
-    if(site == "TMP") {
+    if(site == "DLG") {
+      # The DLG data files have logger_raw with format DLG-{PLOT}_{LOGGER}
+      x %>% 
+        separate(Logger_raw, into = c("Site", "Plot", "Logger"), remove = TRUE) ->
+        x
+    } else if(site == "TMP") {
       # The TMP data files have logger_raw with format PNNL_{LOGGER}
       x %>% 
         separate(Logger_raw, into = c("Site", "Logger"), remove = TRUE) %>% 
@@ -287,14 +298,14 @@ if(nrow(teros) > 0) {
     pivotstep() %>% 
     # NA value is -99999.00
     mutate(value = if_else(value == -9999, NA_real_, value),
-           name = gsub("Teros.?\\(", "", name),
+           name = gsub("Teros.+\\(", "", name),
            name = gsub(")", "", name)) %>% 
     separate(name, into = c("Port", "sensor"), convert = FALSE) %>% 
     left_join(TEROS_METADATA, by = c("Site", "Plot", "Logger", "Port")) %>% 
-    filter(!is.na(ID)) %>% 
+    #filter(!is.na(ID)) %>% 
     # the join changes Plot back to character
-    mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS)) %>% 
-    mutate(Depth_cm = as.factor(Depth_cm),
+    mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS),
+           Depth_cm = as.factor(Depth_cm),
            sensor_name = case_when(
              sensor == "1" ~ "VWC",
              sensor == "2" ~ "Temp",
