@@ -1,8 +1,8 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "/Users/bpbond/Library/CloudStorage/Dropbox/"
-  SITES: "LE"
+  DROPBOX: "C:/Users/wilsonsj/Smithsonian Dropbox/Stephanie Wilson"
+  SITES: "CB"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
