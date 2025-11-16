@@ -135,7 +135,7 @@ read_datalogger_file <- function(filename, quiet = TRUE, ...) {
 
     x <- read_csv(I(dat[-c(1, 3, 4)]), 
                   show_col_types = FALSE, 
-                  na = c("NAN", "-99999"))
+                  na = c("NAN", "-99999", ""))
     # Remove inconsistent and/or not useful columns
     x$Statname <- x$PB <- x$RECORD <- NULL
     # Some Aquatroll tables (specifically at OWC; see e.g. #21) have blank
@@ -176,6 +176,10 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
                         pattern = PATTERN,
                         ignore.case = TRUE, # TMP has different capitalization
                         full.names = TRUE)
+    if(any(grepl("backup$", files))) {
+      message(site, ": ignoring backup file(s)")
+      files <- files[grep("backup$", files, invert = TRUE)]      
+    }
     filetext <- if_else(length(files) == 1, " file", " files")
     message(site, ": found ", length(files), filetext)
     x <- lapply(files, read_datalogger_file)
@@ -200,7 +204,9 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
     } else {
       # The synoptic sites have format Compass_{SITE}_{PLOT}_{LOGGER}
       x %>% 
-        separate(Logger_raw, into = c("Junk", "Site", "Plot", "Logger"), remove = TRUE) %>%
+        separate(Logger_raw, into = c("Junk", "Site", "Plot", "Logger"), 
+                 fill = "right", # we need this because Buoy data have no logger info
+                 remove = TRUE) %>%
         select(-Junk) ->
         x
     }
@@ -466,4 +472,47 @@ if(nrow(troll) > 0) {
 #| eval: false
 redox <- read_files("Redox") 
 no_data_check(redox, "Redox")
+```
+
+# Sonde
+
+```{r exo-read}
+#| output: "asis"
+exo <- read_files("Exo") 
+no_data_check(exo, "Exo")
+```
+
+```{r exo-plots}
+#| fig-width: 9
+#| fig-height: 9
+if(nrow(exo) > 0) {
+  exo %>% 
+    select(-Date, -Time, -sn, -snn) %>% 
+    pivotstep() -> 
+    exo_long
+  
+  for(site in unique(exo_long$Site)) {
+    p <- ggplot(filter(exo_long, Site == site), aes(TIMESTAMP, value)) +
+      facet_wrap(. ~ name, scales = "free") +
+      geom_point(na.rm = TRUE) + 
+      ggtitle(site)
+    print(p)
+  }
+}
+```
+
+```{r exo-tables}
+if(nrow(exo) > 0) {
+  exo_long %>% 
+    group_by(Site, Plot, name) %>% 
+    summarise(Mean = mean(value, na.rm = TRUE), 
+              SD = sd(value, na.rm = TRUE), 
+              Range = robust_range(value, 3),
+              N_values = n(), 
+              N_na = sum(is.na(value)), 
+              .groups = "drop") %>% 
+    gt(groupname_col = "Site", row_group_as_column = TRUE) %>%
+    fmt_number(columns = c("Mean", "SD"), decimals = 1) %>% 
+    fmt_number(columns = c("N_values", "N_na"), decimals = 0, use_seps = TRUE)
+}
 ```
