@@ -469,7 +469,6 @@ if(nrow(troll) > 0) {
 
 ```{r redox-read}
 #| output: "asis"
-#| eval: false
 redox <- read_files("Redox") 
 no_data_check(redox, "Redox")
 ```
