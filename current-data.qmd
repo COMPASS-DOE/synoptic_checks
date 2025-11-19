@@ -31,7 +31,7 @@ SITES <- params$SITES
 PATH <- params$DROPBOX
 
 PLOT_FACTOR_LEVELS <- c("C", "F", "S",                # TMP plots
-                        "UP", "TR", "WTE", "W",       # synoptic plots
+                        "UP", "SWAMP", "TR", "WTE", "W",       # synoptic plots
                         "F1", "F2", "F3", "R1", "R2") # DLG plots
 
 # User can specify groups of synoptic sites: CB or LE
@@ -185,7 +185,7 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
     x <- lapply(files, read_datalogger_file)
     x <- bind_rows(x)
     if(nrow(x) == 0) next # no data!
-    
+
     # Split "Logger_raw" field into "Site", "Plot", and "Logger"
     if(site == "DLG") {
       # The DLG data files have logger_raw with format DLG-{PLOT}_{LOGGER}
@@ -472,6 +472,48 @@ if(nrow(troll) > 0) {
 #| eval: false
 redox <- read_files("Redox") 
 no_data_check(redox, "Redox")
+```
+
+```{r redox-plots}
+#| fig-width: 9
+#| fig-height: 8
+
+if(nrow(redox) > 0) {
+  redox %>% 
+    select(-BattV) %>% 
+    pivotstep() %>% 
+    separate(name, into = c("which", "number"), extra = "drop") %>% 
+    mutate(number = as.numeric(number),
+           Depth = as.numeric(gsub("Redox", "", Table))) ->
+    redox_long
+  
+  for(site in unique(redox_long$Site)) {
+    redox_site <- filter(redox_long, Site == site)
+    p <- ggplot(redox_site, aes(TIMESTAMP, value, color = which)) +
+      facet_grid(number ~ Depth) +
+      geom_point(na.rm = TRUE) +
+      theme(axis.text.x = element_text(angle = 90)) +
+      ggtitle(paste(site, "TEROS"))
+    print(p)
+  }
+}
+```
+
+```{r redox-table}
+if(nrow(redox) > 0) {
+  redox_long %>% 
+    group_by(Site, Plot) %>% 
+    summarise(N_sensor = length(unique(number)), 
+              Mean = mean(value, na.rm = TRUE), 
+              SD = sd(value, na.rm = TRUE), 
+              Range = robust_range(value, 3),
+              N_values = n(), 
+              N_na = sum(is.na(value)), 
+              .groups = "drop") %>% 
+    gt(groupname_col = "Site", row_group_as_column = TRUE) %>% 
+    fmt_number(columns = c("Mean", "SD"), decimals = 3) %>% 
+    fmt_number(columns = c("N_sensor", "N_values", "N_na"), decimals = 0, use_seps = TRUE)
+}
 ```
 
 # Sonde
