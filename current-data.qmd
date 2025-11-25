@@ -477,19 +477,26 @@ no_data_check(redox, "Redox")
 #| fig-width: 9
 #| fig-height: 8
 
+#redox colors 
+#redox_colors <- c("darkgoldenrod1", "darkorange", "chocolate4",
+ #                 "chartreuse2", "green4", "palegreen2", 
+  #                "deepskyblue1", "dodgerblue3", "blue1", 
+   #               "darkorchid2", "orchid3", "mediumpurple4")
+
 redox_assignments <- tribble(~number, ~Depth, ~Rep,
-                             1,        10,     1,
-                             2,        15,     1,
-                             3,        30,     1,
-                             4,        45,     1,
-                             5,        10,     2,
-                             6,        15,     2,
-                             7,        30,     2,
-                             8,        45,     2,
-                             9,        10,     3,
-                             10,       15,     3,
-                             11,       30,     3,
+                             1,        10,     1,  
+                             2,        15,     1,    
+                             3,        30,     1,    
+                             4,        45,     1,   
+                             5,        10,     2,   
+                             6,        15,     2,   
+                             7,        30,     2,    
+                             8,        45,     2,     
+                             9,        10,     3,    
+                             10,       15,     3,    
+                             11,       30,     3,    
                              12,       45,     3)
+
 
 if(nrow(redox) > 0) {
   redox %>% 
@@ -499,14 +506,17 @@ if(nrow(redox) > 0) {
     separate(name, into = c("which", "number"), extra = "drop") %>% 
     mutate(number = as.numeric(number)) %>% 
     left_join(redox_assignments, by = "number") %>% 
-    mutate(Depth = as.factor(Depth)) ->
+    mutate(Depth = as.factor(Depth)) %>%
+    mutate(Depth_Rep = as.factor(paste(Depth, Rep, sep = "-"))) ->
     redox_long
+  
   
   for(site in unique(redox_long$Site)) {
     redox_site <- filter(redox_long, Site == site)
-    p <- ggplot(redox_site, aes(TIMESTAMP, value, color = Depth)) +
-      facet_grid(which ~ Rep) +
+    p <- ggplot(redox_site, aes(TIMESTAMP, value, color = Depth_Rep)) +
+      facet_grid(which ~ Plot) +
       geom_point(na.rm = TRUE) +
+      #scale_color_manual(values = redox_colors) + 
       theme(axis.text.x = element_text(angle = 90)) +
       ggtitle(paste(site, "Redox"))
     print(p)
