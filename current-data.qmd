@@ -1,7 +1,7 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "~/Dropbox/"
+  DROPBOX: "C:/Users/wilsonsj/Smithsonian Dropbox/Stephanie Wilson"
   SITES: "CB"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
@@ -26,6 +26,7 @@ theme_set(theme_bw())
 library(dplyr)
 library(tidyr)
 library(gt)
+library(lubridate)
 
 SITES <- params$SITES
 PATH <- params$DROPBOX
@@ -260,8 +261,15 @@ if(nrow(sf) > 0) {
     left_join(SF_METADATA, by = c("Site",  "Logger", "Port")) -> 
     sf_long
   
-  for(site in unique(sf_long$Site)) {
-    p <- ggplot(filter(sf_long, Site == site), aes(TIMESTAMP, value, color = Tree)) +
+  sf_long_current <- sf_long %>%
+      filter(
+    TIMESTAMP >= Sys.time() - days(7),
+    TIMESTAMP <= Sys.time()
+  )
+  
+  for(site in unique(sf_long_current$Site)) {
+    p <- ggplot(filter(sf_long_current, Site == site), 
+                aes(TIMESTAMP, value, color = Tree)) +
       facet_grid(. ~ Plot) +
       ylab("Raw sapflow") +
       geom_point(na.rm = TRUE) + 
@@ -273,7 +281,7 @@ if(nrow(sf) > 0) {
 
 ```{r sf-table}
 if(nrow(sf) > 0) {
-  sf_long %>% 
+  sf_long_current %>% 
     group_by(Site, Plot) %>% 
     summarise(N_sensor = length(unique(Tree)), 
               Mean = mean(value, na.rm = TRUE), 
@@ -319,8 +327,14 @@ if(nrow(teros) > 0) {
            )) -> 
     teros_long
   
-  for(site in unique(teros_long$Site)) {
-    teros_site <- filter(teros_long, Site == site)
+teros_long_current <- teros_long %>%
+      filter(
+    TIMESTAMP >= Sys.time() - days(7),
+    TIMESTAMP <= Sys.time()
+  )
+  
+  for(site in unique(teros_long_current$Site)) {
+    teros_site <- filter(teros_long_current, Site == site)
     p <- ggplot(teros_site, aes(TIMESTAMP, value, color = Depth_cm)) +
       facet_grid(sensor_name ~ Plot, scales = "free") +
       geom_point(na.rm = TRUE) +
@@ -333,7 +347,7 @@ if(nrow(teros) > 0) {
 
 ```{r teros-table}
 if(nrow(teros) > 0) {
-    teros_long %>% 
+    teros_long_current %>% 
     group_by(Site, Plot, sensor_name) %>% 
     summarise(N_sensor = length(unique(Port)), 
               Mean = mean(value, na.rm = TRUE), 
@@ -423,10 +437,17 @@ troll_long %>%
   
     # join is many-to-one: many names at a given timestamp
     troll_long %>% 
-      left_join(wl, by = c("Site", "Plot", "Instrument_ID", "TIMESTAMP"), relationship = "many-to-one") ->
+      left_join(wl, by = c("Site", "Plot", "Instrument_ID", "TIMESTAMP"),
+                relationship = "many-to-one") ->
     troll_long
   
-     p <- ggplot(troll_long, aes(TIMESTAMP, water_level_cm, color = water_level_cm < -ground_to_sensor_cm)) +
+    troll_long_current <- troll_long %>%
+      filter(
+    TIMESTAMP >= Sys.time() - days(7),
+    TIMESTAMP <= Sys.time()
+  )
+  
+     p <- ggplot(troll_long_current, aes(TIMESTAMP, water_level_cm, color = water_level_cm < -ground_to_sensor_cm)) +
       facet_grid(Site ~ Plot, scales = "free") +
       geom_point(na.rm = TRUE) +
       scale_color_manual("WL below sensor", values = c("black", "red")) +
@@ -434,8 +455,8 @@ troll_long %>%
       theme(axis.text.x = element_text(angle = 90))
     print(p)
     
-  for(nm in unique(troll_long$name)) {
-    x <- filter(troll_long, name == nm)
+  for(nm in unique(troll_long_current$name)) {
+    x <- filter(troll_long_current, name == nm)
     p <- ggplot(x, aes(TIMESTAMP, value, color = water_level_cm < -ground_to_sensor_cm)) +
       facet_grid(Site ~ Plot, scales = "free") +
       ylab(nm) +
@@ -450,7 +471,7 @@ troll_long %>%
 
 ```{r troll-tables}
 if(nrow(troll) > 0) {
-  troll_long %>% 
+  troll_long_current %>% 
     group_by(Site, Plot, name) %>% 
     summarise(N_sensor = length(unique(Instrument_ID)), 
               Mean = mean(value, na.rm = TRUE), 
@@ -510,9 +531,15 @@ if(nrow(redox) > 0) {
     mutate(Depth_Rep = as.factor(paste(Depth, Rep, sep = "-"))) ->
     redox_long
   
+redox_long_current <- redox_long %>%
+      filter(
+    TIMESTAMP >= Sys.time() - days(7),
+    TIMESTAMP <= Sys.time()
+  )
   
-  for(site in unique(redox_long$Site)) {
-    redox_site <- filter(redox_long, Site == site)
+  
+  for(site in unique(redox_long_current$Site)) {
+    redox_site <- filter(redox_long_current, Site == site)
     p <- ggplot(redox_site, aes(TIMESTAMP, value, color = Depth_Rep)) +
       facet_grid(which ~ Plot) +
       geom_point(na.rm = TRUE) +
@@ -526,7 +553,7 @@ if(nrow(redox) > 0) {
 
 ```{r redox-table}
 if(nrow(redox) > 0) {
-  redox_long %>% 
+  redox_long_current %>% 
     group_by(Site, Plot) %>% 
     summarise(N_sensor = length(unique(number)), 
               Mean = mean(value, na.rm = TRUE), 
@@ -558,8 +585,14 @@ if(nrow(exo) > 0) {
     pivotstep() -> 
     exo_long
   
-  for(site in unique(exo_long$Site)) {
-    p <- ggplot(filter(exo_long, Site == site), aes(TIMESTAMP, value)) +
+exo_long_current <- exo_long %>%
+      filter(
+    TIMESTAMP >= Sys.time() - days(7),
+    TIMESTAMP <= Sys.time()
+  )
+  
+  for(site in unique(exo_long_current$Site)) {
+    p <- ggplot(filter(exo_long_current, Site == site), aes(TIMESTAMP, value)) +
       facet_wrap(. ~ name, scales = "free") +
       geom_point(na.rm = TRUE) + 
       ggtitle(site)
@@ -570,8 +603,8 @@ if(nrow(exo) > 0) {
 
 ```{r exo-tables}
 if(nrow(exo) > 0) {
-  exo_long %>% 
-    group_by(Site, Plot, name) %>% 
+  exo_long_current %>% 
+    group_by(Site, name) %>% 
     summarise(Mean = mean(value, na.rm = TRUE), 
               SD = sd(value, na.rm = TRUE), 
               Range = robust_range(value, 3),
