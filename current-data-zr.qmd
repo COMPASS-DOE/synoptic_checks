@@ -276,8 +276,8 @@ if(nrow(sf) > 0) {
       facet_grid(. ~ Plot) +
       ylab("Raw sapflow") +
       geom_point(na.rm = TRUE) + 
-      ggtitle(site)
-    print(p)
+      ggtitle(site) + 
+      print(p)
   }
 }
 ```
@@ -451,10 +451,18 @@ no_data_check(redox, "Redox")
 #| fig-height: 8
 
 #redox colors 
-#redox_colors <- c("darkgoldenrod1", "darkorange", "chocolate4",
- #                 "chartreuse2", "green4", "palegreen2", 
-  #                "deepskyblue1", "dodgerblue3", "blue1", 
-   #               "darkorchid2", "orchid3", "mediumpurple4")
+redox_colors <- c("10-1" = "darkgoldenrod1", 
+                  "10-2" = "darkorange", 
+                  "10-3" = "chocolate",
+                  "15-1" = "chartreuse2", 
+                  "15-2" = "darkolivegreen3", 
+                  "15-3" = "green4", 
+                  "30-1" = "cyan", 
+                  "30-2" = "deepskyblue1", 
+                  "30-3" = "dodgerblue3", 
+                  "45-1" = "darkorchid2", 
+                  "45-2" = "orchid3", 
+                  "45-3" = "mediumpurple4")
 
 redox_assignments <- tribble(~number, ~Depth, ~Rep,
                              1,        10,     1,  
@@ -495,7 +503,7 @@ redox_long_current <- redox_long %>%
     p <- ggplot(redox_site, aes(TIMESTAMP, value, color = Depth_Rep)) +
       facet_grid(which ~ Plot) +
       geom_point(na.rm = TRUE) +
-      #scale_color_manual(values = redox_colors) + 
+      scale_color_manual(values = redox_colors) + 
       theme(axis.text.x = element_text(angle = 90)) +
       ggtitle(paste(site, "Redox"))
     print(p)
