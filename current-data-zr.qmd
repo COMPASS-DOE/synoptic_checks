@@ -2,7 +2,7 @@
 author: "COMPASS workflows team"
 params:
   DROPBOX: "C:/Users/readz/Smithsonian Dropbox/Zoe Read"
-  SITES: "CB"
+  SITES: "TMP"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
@@ -34,7 +34,7 @@ SITES <- params$SITES
 PATH <- params$DROPBOX
 
 PLOT_FACTOR_LEVELS <- c("C", "F", "S",                # TMP plots
-                        "UP", "SWAMP", "TR", "WTE", "W",       # synoptic plots
+                        "UP", "SWAMP", "TR", "WTE", "W", "WC",      # synoptic plots
                         "F1", "F2", "F3", "R1", "R2") # DLG plots
 
 # User can specify groups of synoptic sites: CB or LE
@@ -42,10 +42,10 @@ if(length(SITES == 1)) {
   if(SITES == "CB") {
     PLOTS <- c("UP", "SWAMP", "TR", "W")
   } else if(SITES == "LE") {
-    PLOTS <- c("UP", "TR", "WTE", "W")
+    PLOTS <- c("UP", "TR", "WTE", "W", "WC")
   } else if(SITES == "TESTING") {
     PLOTS <- c("C", "F", "S",                # TMP plots
-                "UP", "SWAMP", "TR", "WTE", "W",       # synoptic plots
+                "UP", "SWAMP", "TR", "WTE", "W", "WC",      # synoptic plots
                 "F1", "F2", "F3", "R1", "R2")
   } else if(SITES == "TMP") {
     PLOTS <- c("C", "F", "S")
@@ -315,7 +315,7 @@ if(nrow(teros) > 0) {
     pivotstep() %>% 
     # NA value is -99999.00
     mutate(value = if_else(value == -9999, NA_real_, value),
-           name = gsub("Teros.+\\(", "", name),
+           name = gsub("Teros\\(", "", name),
            name = gsub(")", "", name)) %>% 
     separate(name, into = c("Port", "sensor"), convert = FALSE) %>% 
     left_join(TEROS_METADATA, by = c("Site", "Plot", "Logger", "Port")) %>% 
@@ -440,7 +440,10 @@ location_colors = c("UP" = "#20063B",
                     "TR" = "#FFBC42",
                     "SWAMP" = "darkgrey",
                     "WC" = "#419973",
-                    "UP" = "#3B1F2B")
+                    "UP" = "#3B1F2B", 
+                    "C" = "springgreen2",
+                    "F" = "cyan2",
+                    "S" = "violetred2")
 
 ## This function creates standardized time-series plots 
 #flag values where AQ is out of water
@@ -509,7 +512,14 @@ max_counts <- site_locations %>%
   filter(!(Site == "GCW" & Plot == "SWAMP")) %>% 
   filter(!(Site == "GWI" & Plot == "SWAMP")) %>% 
   filter(!(Site == "MSM" & Plot == "SWAMP")) %>% 
-  mutate(Plot = fct_relevel(Plot, c("UP", "TR", "WTE", "W", "WC")))
+  filter(!(site == "OWC" & Plot == "UP")) %>% 
+  filter(!(site == "OWC" & Plot == "W")) %>% 
+  filter(!(site == "CRC" & Plot == "WTE")) %>% 
+  filter(!(site == "CRC" & Plot == "WC")) %>% 
+  filter(!(site == "PTR" & Plot == "WTE")) %>% 
+  filter(!(site == "PTR" & Plot == "WC"))
+# %>% 
+#   mutate(Plot = fct_relevel(Plot, c("UP", "TR", "WTE", "W", "WC")))
 
 prop_plot <- troll_long_current %>% 
   filter(name == "Pressure" & !is.na(value)) %>% ##Why are there 3 replicates for each timestamp and only one has a value?
@@ -554,9 +564,9 @@ redox_colors <- c("10-1" = "darkgoldenrod1",
                   "15-1" = "chartreuse2", 
                   "15-2" = "darkolivegreen3", 
                   "15-3" = "green4", 
-                  "30-1" = "cyan", 
-                  "30-2" = "deepskyblue1", 
-                  "30-3" = "dodgerblue3", 
+                  "30-1" = "deepskyblue1", 
+                  "30-2" = "dodgerblue3", 
+                  "30-3" = "blue", 
                   "45-1" = "darkorchid2", 
                   "45-2" = "orchid3", 
                   "45-3" = "mediumpurple4")
