@@ -284,7 +284,7 @@ ts_sal_plot <- ts_plot("salinity", "Salinity (PSU)")
 ts_do_plot <- ts_plot("do_mgl", "DO (mg/L)")
 ts_ph_plot <- ts_plot("p_h", "pH")
 
-ts_plots <- plot_grid(ts_pressure_plot, 
+ts_wl_plot <- plot_grid(ts_pressure_plot, 
                       ts_temp_plot, 
                       ts_sal_plot, 
                       ts_do_plot, 
