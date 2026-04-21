@@ -2,7 +2,7 @@
 author: "COMPASS workflows team"
 params:
   DROPBOX: "C:/Users/readz/Smithsonian Dropbox/Zoe Read"
-  SITES: "TMP"
+  SITES: "CB"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
@@ -118,7 +118,8 @@ teros_tmp %>%
          Site = if_else(Site == "GCREW", "GCW", Site), 
          Plot = if_else(Plot == "Swamp", "SWAMP", Plot), 
          Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS), 
-         Logger = if_else(Site == "SWH" & Plot == "UP", "424", Logger)) ->
+         Logger = if_else(Site == "SWH" & Plot == "UP", "424", Logger), 
+         Logger = if_else(Site == "MSM" & Plot == "UP", "403", Logger)) ->
   TEROS_METADATA
 ```
 
@@ -289,7 +290,7 @@ if(nrow(sf) > 0) {
   
   for(site in unique(sf_long_current$Site)) {
     p <- ggplot(filter(sf_long_current, Site == site), 
-                aes(TIMESTAMP, value, color = interaction(Plot, Tree))) +
+                aes(TIMESTAMP, value, color = interaction(Tree))) +
       facet_grid(. ~ Plot) +
       ylab("Raw sapflow") +
       geom_point(na.rm = TRUE) + 
@@ -315,10 +316,13 @@ if(nrow(teros) > 0) {
     pivotstep() %>% 
     # NA value is -99999.00
     mutate(value = if_else(value == -9999, NA_real_, value),
-           name = gsub("Teros\\(", "", name),
+           name = gsub("Teros.+\\(", "", name), ## For CB
+           name = gsub("Teros\\(", "", name), ## For TMP
            name = gsub(")", "", name)) %>% 
     separate(name, into = c("Port", "sensor"), convert = FALSE) %>% 
     left_join(TEROS_METADATA, by = c("Site", "Plot", "Logger", "Port")) %>% 
+    filter(!(Plot == "W" & Port == "3")) %>% ## W sites don't have Ports 3 and 4
+    filter(!(Plot == "W" & Port == "4")) %>% ## W sites don't have Ports 3 and 4
     #filter(!is.na(ID)) %>% 
     # the join changes Plot back to character
     mutate(Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS),
@@ -521,8 +525,8 @@ max_counts <- site_locations %>%
 # %>% 
 #   mutate(Plot = fct_relevel(Plot, c("UP", "TR", "WTE", "W", "WC")))
 
-prop_plot <- troll_long_current %>% 
-  filter(name == "Pressure" & !is.na(value)) %>% ##Why are there 3 replicates for each timestamp and only one has a value?
+prop_plot_600 <- troll_long_current %>% 
+  filter(name == "Pressure" & !is.na(value) & Table == "WaterLevel600") %>% ##Why are there 3 replicates for each timestamp and only one has a value?
   group_by(Site, Plot) %>% 
   count() %>%
   bind_rows(anti_join(max_counts, .)) %>% 
@@ -538,12 +542,35 @@ prop_plot <- troll_long_current %>%
             position = position_dodge(width = .9), angle = 90, show.legend = F) +
   scale_color_manual(values = c("black", "white"))  +
   scale_fill_manual(values = location_colors) + 
-  labs(x = "", y = "Percent", title = "Aquatroll data transmission")
+  labs(x = "", y = "Percent", title = "Aquatroll600 data transmission")
 
-prop_plot
+prop_plot_600
+
+if(SITES == "TMP") {
+prop_plot_200 <- troll_long_current %>% 
+  filter(name == "Pressure" & !is.na(value) & Table == "WaterLevel200") %>% ##Why are there 3 replicates for each timestamp and only one has a value?
+  group_by(Site, Plot) %>% 
+  count() %>%
+  bind_rows(anti_join(max_counts, .)) %>% 
+  mutate(n = ifelse(is.na(n), 0, n)) %>% 
+  mutate(percent = (n / max_count) * 100) %>% 
+  mutate(theoretical = 100) %>% 
+  mutate(txt_color = ifelse(percent > 50, "upper", "lower")) %>% 
+  ggplot(aes(x = Site, fill = Plot)) + 
+  geom_col(aes(y = theoretical), 
+           position = "dodge", alpha = 0.2, show.legend = F)  +
+  geom_col(aes(y = percent), position = "dodge", color = "black") +
+  geom_text(aes(y = 50, label = paste0(round(percent, 0), "%"), group = Plot, color = txt_color), 
+            position = position_dodge(width = .9), angle = 90, show.legend = F) +
+  scale_color_manual(values = c("black", "white"))  +
+  scale_fill_manual(values = location_colors) + 
+  labs(x = "", y = "Percent", title = "Aquatroll200 data transmission")
+
+  print(prop_plot_200) } else { 
+  print ("No AQ200 Data")
+  }
 
 ```
-
 
 # Redox
 
@@ -561,16 +588,34 @@ no_data_check(redox, "Redox")
 redox_colors <- c("10-1" = "darkgoldenrod1", 
                   "10-2" = "darkorange", 
                   "10-3" = "chocolate",
+                  "10-4" = "coral3", 
+                  "10-5" = "darkgoldenrod4", 
                   "15-1" = "chartreuse2", 
                   "15-2" = "darkolivegreen3", 
                   "15-3" = "green4", 
+                  "20-1" = "chartreuse2", 
+                  "20-2" = "darkolivegreen3", 
+                  "20-3" = "green4", 
+                  "20-4" = "darkgreen", 
+                  "20-5" = "darkolivegreen", 
                   "30-1" = "deepskyblue1", 
                   "30-2" = "dodgerblue3", 
                   "30-3" = "blue", 
+                  "35-1" = "deepskyblue1", 
+                  "35-2" = "dodgerblue3", 
+                  "35-3" = "blue", 
+                  "35-4" = "royalblue4", 
+                  "35-5" = "darkslategray", 
                   "45-1" = "darkorchid2", 
                   "45-2" = "orchid3", 
-                  "45-3" = "mediumpurple4")
+                  "45-3" = "mediumpurple4",
+                  "55-1" = "darkorchid2", 
+                  "55-2" = "orchid3", 
+                  "55-3" = "mediumpurple4", 
+                  "55-4" = "slateblue4", 
+                  "55-5" = "purple4")
 
+if(SITES == "CB") {
 redox_assignments <- tribble(~number, ~Depth, ~Rep,
                              1,        10,     1,  
                              2,        15,     1,    
@@ -583,8 +628,34 @@ redox_assignments <- tribble(~number, ~Depth, ~Rep,
                              9,        10,     3,    
                              10,       15,     3,    
                              11,       30,     3,    
-                             12,       45,     3)
+                             12,       45,     3) }
 
+if(SITES == "TMP") {
+redox_assignments <- tribble(~number, ~Depth, ~Rep,
+                             1,        10,     1,  
+                             2,        20,     1,    
+                             3,        35,     1,    
+                             4,        55,     1,   
+                             5,        10,     2,   
+                             6,        20,     2,   
+                             7,        35,     2,    
+                             8,        55,     2,     
+                             9,        10,     3,    
+                             10,       20,     3,    
+                             11,       35,     3,    
+                             12,       55,     3, 
+                             13,       10,     4, 
+                             14,       20,     4, 
+                             15,       35,     4, 
+                             16,       55,     4, 
+                             17,       10,     5, 
+                             18,       20,     5, 
+                             19,       35,     5, 
+                             20,       55,     5, 
+                             ) }
+
+##Is this correct for TMP plots?  
+##No "Plot" data included for TMP redox data? 
 
 if(nrow(redox) > 0) {
   redox %>% 
