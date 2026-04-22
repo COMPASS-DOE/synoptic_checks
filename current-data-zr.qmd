@@ -443,7 +443,7 @@ location_colors = PNWColors::pnw_palette("Sunset", length(unique(troll_long_curr
 location_colors = c("UP" = "#20063B",
                     "TR" = "#FFBC42",
                     "SWAMP" = "darkgrey",
-                    "WC" = "#419973",
+                    "W" = "#419973",
                     "UP" = "#3B1F2B", 
                     "C" = "springgreen2",
                     "F" = "cyan2",
