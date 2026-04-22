@@ -546,9 +546,10 @@ prop_plot_600 <- troll_long_current %>%
 
 prop_plot_600
 
-if(SITES == "TMP") {
-prop_plot_200 <- troll_long_current %>% 
-  filter(name == "Pressure" & !is.na(value) & Table == "WaterLevel200") %>% ##Why are there 3 replicates for each timestamp and only one has a value?
+if("TMP" %in% troll_long_current$Site) {
+ prop_plot_200 <- troll_long_current %>% 
+  
+   filter(name == "Pressure" & !is.na(value) & Table == "WaterLevel200") %>% ##Why are there 3 replicates for each timestamp and only one has a value?
   group_by(Site, Plot) %>% 
   count() %>%
   bind_rows(anti_join(max_counts, .)) %>% 
@@ -615,7 +616,7 @@ redox_colors <- c("10-1" = "darkgoldenrod1",
                   "55-4" = "slateblue4", 
                   "55-5" = "purple4")
 
-if(SITES == "CB") {
+if (any(redox$Site %in% c("SWH", "GCW", "GWI", "MSM"))) {
 redox_assignments <- tribble(~number, ~Depth, ~Rep,
                              1,        10,     1,  
                              2,        15,     1,    
@@ -628,9 +629,8 @@ redox_assignments <- tribble(~number, ~Depth, ~Rep,
                              9,        10,     3,    
                              10,       15,     3,    
                              11,       30,     3,    
-                             12,       45,     3) }
-
-if(SITES == "TMP") {
+                             12,       45,     3) 
+} else if("TMP" %in% redox$Site) {
 redox_assignments <- tribble(~number, ~Depth, ~Rep,
                              1,        10,     1,  
                              2,        20,     1,    
@@ -651,8 +651,10 @@ redox_assignments <- tribble(~number, ~Depth, ~Rep,
                              17,       10,     5, 
                              18,       20,     5, 
                              19,       35,     5, 
-                             20,       55,     5, 
-                             ) }
+                             20,       55,     5) 
+} else {
+  print ("No redox assignments")
+}
 
 ##Is this correct for TMP plots?  
 ##No "Plot" data included for TMP redox data? 
