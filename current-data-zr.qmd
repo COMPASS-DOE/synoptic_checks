@@ -29,6 +29,7 @@ library(gt)
 library(lubridate)
 library(cowplot)
 library(forcats)
+library(stringr)
 
 SITES <- params$SITES
 PATH <- params$DROPBOX
@@ -290,7 +291,7 @@ if(nrow(sf) > 0) {
   
   for(site in unique(sf_long_current$Site)) {
     p <- ggplot(filter(sf_long_current, Site == site), 
-                aes(TIMESTAMP, value, color = interaction(Tree))) +
+                aes(TIMESTAMP, value, color = Tree)) +
       facet_grid(. ~ Plot) +
       ylab("Raw sapflow") +
       geom_point(na.rm = TRUE) + 
@@ -526,7 +527,7 @@ max_counts <- site_locations %>%
 #   mutate(Plot = fct_relevel(Plot, c("UP", "TR", "WTE", "W", "WC")))
 
 prop_plot_600 <- troll_long_current %>% 
-  filter(name == "Pressure" & !is.na(value) & Table == "WaterLevel600") %>% ##Why are there 3 replicates for each timestamp and only one has a value?
+  filter(name == "Pressure" & !is.na(value) & str_detect(Table, "WaterLevel600")) %>% ##Why are there 3 replicates for each timestamp and only one has a value?
   group_by(Site, Plot) %>% 
   count() %>%
   bind_rows(anti_join(max_counts, .)) %>% 
