@@ -234,11 +234,14 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
     } else if(site == "TMP") {
       # The TMP data files have logger_raw with format PNNL_{LOGGER}
       x %>% 
-        separate(Logger_raw, into = c("Site", "Logger"), remove = TRUE) %>% 
+        separate(Logger_raw, into = c("Site", "Logger", "Plot"), remove = TRUE) %>% 
         mutate(Site = "TMP",
                Plot = case_when(Logger %in% c("11", "12", "13") ~ "C",
                                 Logger %in% c("21", "22", "23") ~ "F",
-                                Logger %in% c("31", "32", "33") ~ "S")) ->
+                                Logger %in% c("31", "32", "33") ~ "S", 
+                                Plot %in% c("control") ~ "C",
+                                Plot %in% c("fresh") ~ "F",
+                                Plot %in% c("salt") ~ "S")) ->
         x
     } else {
       # The synoptic sites have format Compass_{SITE}_{PLOT}_{LOGGER}
@@ -759,8 +762,8 @@ if(nrow(redox) > 0) {
     pivotstep() %>% 
     separate(name, into = c("which", "number"), extra = "drop") %>% 
     mutate(number = as.numeric(number)) %>% 
-    # select(-c(Plot, Logger)) %>% 
-    # left_join(REDOX_METADATA, by = c("Site", "which", "number")) %>% ##add in tmp metadata
+    select(-Logger) %>% 
+    # left_join(REDOX_METADATA, by = c("Site", "Plot", "which", "number")) %>% ##add in tmp metadata
     left_join(redox_assignments, by = "number") %>% 
     mutate(Depth = as.factor(Depth)) %>%
     mutate(Depth_Rep = as.factor(paste(Depth, Rep, sep = "-"))) ->
@@ -772,18 +775,18 @@ redox_long_current <- redox_long %>%
     TIMESTAMP <= Sys.time()
   )
 
-if("TMP" %in% redox_long_current$Site) {
-  redox_long_current <- redox_long_current %>% 
-    mutate(redox_facet = redox_long_current$Site)
-} else {
-  redox_long_current <- redox_long_current %>% 
-    mutate(redox_facet = redox_long_current$Plot)
-}
+# if("TMP" %in% redox_long_current$Site) {
+#   redox_long_current <- redox_long_current %>% 
+#     mutate(redox_facet = redox_long_current$Site)
+# } else {
+#   redox_long_current <- redox_long_current %>% 
+#     mutate(redox_facet = redox_long_current$Plot)
+# }
   
   for(site in unique(redox_long_current$Site)) {
     redox_site <- filter(redox_long_current, Site == site)
     p <- ggplot(redox_site, aes(TIMESTAMP, value, color = Depth_Rep)) +
-      facet_grid(which ~ redox_facet) +
+      facet_grid(which ~ Plot) +
       geom_point(na.rm = TRUE) +
       scale_color_manual(values = redox_colors) + 
       theme(axis.text.x = element_text(angle = 90)) +
