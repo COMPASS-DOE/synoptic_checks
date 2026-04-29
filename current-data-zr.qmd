@@ -2,7 +2,7 @@
 author: "COMPASS workflows team"
 params:
   DROPBOX: "C:/Users/readz/Smithsonian Dropbox/Zoe Read"
-  SITES: "CB"
+  SITES: "TMP"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
@@ -352,8 +352,8 @@ no_data_check(teros, "TEROS")
 ```
 
 ```{r teros-plots}
-#| fig-width: 15
-#| fig-height: 15
+#| fig-width: 9
+#| fig-height: 7
 if(nrow(teros) > 0) {
   teros %>% 
     pivotstep() %>% 
@@ -386,26 +386,38 @@ teros_long_current <- teros_long %>%
 ##Look at rows where the Depth is NA. If the value is also NA, remove that row. If the value is not NA, write out a warning that "A TEROS sensor is not correctly matched with its depth ID". 
   teros_long_current_NA <- subset(teros_long_current, is.na(Depth_cm))
   
+##Only filter out NA depths if all values are either NA or 0, otherwise leave the dataframe as is
   teros_long_current_filtered <- 
     if(nrow(teros_long_current_NA) > 0 & 
        mean(teros_long_current_NA$value, na.rm = TRUE) == 0) { 
             teros_long_current %>% filter(!is.na(Depth_cm))} else { 
             teros_long_current }
+
+##If the dataframe has been filtered or there are no NA depth values, print that the TEROS sensors are all accounted for. Otherwise, if the dataframe was not filtered then there is a TERO sensor that was not correctly matched with a depth and is outputting values. 
+    if(nrow(teros_long_current_filtered) < nrow(teros_long_current)) { 
+      print ("All TEROS sensor depths accounted for")} else if (nrow(teros_long_current_NA) == 0) { 
+        print ("All TEROS sensor depths accounted for")} else { 
+        print ("A TEROS sensor is not correctly matched with its depth") }
+            
+##Set some bounds that are typical like if the temperature is over 30 C then write out which sensor it is and which logger it is on for the TEROS
+  teros_unusual_temp <- teros_long_current_filtered %>%
+    filter(sensor_name == "Temp") %>%
+    filter(value > 30)
+
+  if(nrow(teros_unusual_temp) > 0) {
+      print ("Some TEROS sensors have temperature values above the typical range.See below.")
+      print(unique(teros_unusual_temp %>% select(Site, Plot, Logger, ID, Depth_cm))) } else {
+      print ("TEROS sensors within typical temperature range.") }
   
-    if(nrow(teros_long_current_filtered) <  nrow(teros_long_current)) { 
-            print ("All TEROS sensor depths accounted for")} else { 
-            print ("A TEROS sensor is not correctly matched with its depth") }
-
-
-  for(site in unique(teros_long_current$Site)) {
-    teros_site <- filter(teros_long_current, Site == site)
+  
+  for(site in unique(teros_long_current_filtered$Site)) {
+    teros_site <- filter(teros_long_current_filtered, Site == site)
     p <- ggplot(teros_site, 
-                aes(TIMESTAMP, value, color = interaction(Depth_cm, ID))) +
+                aes(TIMESTAMP, value, color = Depth_cm)) +
       facet_grid(sensor_name ~ Plot, scales = "free") +
       geom_point(na.rm = TRUE) +
       theme(axis.text.x = element_text(angle = 90)) +
-      ggtitle(paste(site, "TEROS")) + 
-      theme(legend.position = "bottom")
+      ggtitle(paste(site, "TEROS"))
     
     print(p)
   }
@@ -747,7 +759,7 @@ if(nrow(redox) > 0) {
     pivotstep() %>% 
     separate(name, into = c("which", "number"), extra = "drop") %>% 
     mutate(number = as.numeric(number)) %>% 
-    select(-c(Plot, Logger)) %>% 
+    # select(-c(Plot, Logger)) %>% 
     # left_join(REDOX_METADATA, by = c("Site", "which", "number")) %>% ##add in tmp metadata
     left_join(redox_assignments, by = "number") %>% 
     mutate(Depth = as.factor(Depth)) %>%
@@ -759,12 +771,19 @@ redox_long_current <- redox_long %>%
     TIMESTAMP >= Sys.time() - days(7),
     TIMESTAMP <= Sys.time()
   )
-  
+
+if("TMP" %in% redox_long_current$Site) {
+  redox_long_current <- redox_long_current %>% 
+    mutate(redox_facet = redox_long_current$Site)
+} else {
+  redox_long_current <- redox_long_current %>% 
+    mutate(redox_facet = redox_long_current$Plot)
+}
   
   for(site in unique(redox_long_current$Site)) {
     redox_site <- filter(redox_long_current, Site == site)
     p <- ggplot(redox_site, aes(TIMESTAMP, value, color = Depth_Rep)) +
-      facet_grid(which ~ Site) +
+      facet_grid(which ~ redox_facet) +
       geom_point(na.rm = TRUE) +
       scale_color_manual(values = redox_colors) + 
       theme(axis.text.x = element_text(angle = 90)) +

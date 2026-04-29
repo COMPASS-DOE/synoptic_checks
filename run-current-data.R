@@ -17,8 +17,8 @@ if(Sys.getenv("CI") == "") {
   SITES <- "TESTING"
 }
 
-quarto_render("current-data-zr.qmd", 
-              execute_params = list(DROPBOX = DROPBOX, SITES = SITES))
+system.time({quarto_render("current-data-zr.qmd", 
+              execute_params = list(DROPBOX = DROPBOX, SITES = SITES))})
                                                         
 message("All done")
 
