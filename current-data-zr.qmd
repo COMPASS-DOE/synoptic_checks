@@ -119,9 +119,25 @@ teros_tmp %>%
          Site = if_else(Site == "GCREW", "GCW", Site), 
          Plot = if_else(Plot == "Swamp", "SWAMP", Plot), 
          Plot = factor(Plot, levels = PLOT_FACTOR_LEVELS), 
+         ##Need to check but these logger numbers seemed to be off
          Logger = if_else(Site == "SWH" & Plot == "UP", "424", Logger), 
          Logger = if_else(Site == "MSM" & Plot == "UP", "403", Logger)) ->
   TEROS_METADATA
+
+
+# Redox information, same deal
+REDOX_TMP_FILE <- "ancillary-data/TEMPEST_Redox_Monitoring.xlsx - Tracking.csv"
+message("Reading ", REDOX_TMP_FILE)
+redox_tmp <- read_csv(REDOX_TMP_FILE, col_types = "cccccccdcccccc")
+redox_tmp %>% 
+  mutate(Site = "TMP",
+         Plot = case_when(Plot == "Freshwater" ~ "F",
+                          Plot == "Saltwater" ~ "S",
+                          Plot == "Control" ~ "C")) %>% 
+  separate(`Loggernet Channel`, into = c("which", "number"), extra = "drop") %>% 
+  mutate(number = as.numeric(number)) -> 
+  REDOX_METADATA #There is no synoptic redox metadata yet
+
 ```
 
 Sites: `r paste(SITES, collapse = ", ")`
@@ -273,7 +289,7 @@ no_data_check(sf, "Sapflow")
 ```
 
 ```{r sf-plots}
-#| fig-width: 9
+#| fig-height: 9
 if(nrow(sf) > 0) {
   sf %>% 
     pivotstep() %>% 
@@ -289,16 +305,42 @@ if(nrow(sf) > 0) {
     TIMESTAMP <= Sys.time()
   )
   
-  for(site in unique(sf_long_current$Site)) {
-    p <- ggplot(filter(sf_long_current, Site == site), 
-                aes(TIMESTAMP, value, color = Tree)) +
+  my_palette <- rainbow(length(unique(sf_long_current$Tree))) 
+  random_palette <- sample(my_palette)
+  
+  # sf_long_current <- subset(sf_long_current, Tree != "C12 (1328)")
+  
+  ##Look at rows where the Tree is NA. If the value is also NA or 0, remove that row. If the value is greater than 0, write out a warning that "A sapflow sensor is not correctly matched with its tree ID". 
+  sf_long_current_NA_Tree <- subset(sf_long_current, is.na(Tree))
+  sf_long_current_NA_value <- subset(sf_long_current_NA_Tree, is.na(value))
+
+  
+  sf_long_current_filtered <- 
+    if((nrow(sf_long_current_NA_Tree) > 0 &
+       mean(sf_long_current_NA_Tree$value, na.rm = TRUE) == 0) |
+       nrow(sf_long_current_NA_Tree) == nrow(sf_long_current_NA_value)) { 
+            sf_long_current %>% filter(!is.na(Tree))} else { 
+            sf_long_current }
+  
+    if(nrow(sf_long_current_filtered) <  nrow(sf_long_current)) { 
+            print ("All SF sensor trees accounted for")} else { 
+            print ("A sapflow sensor is not correctly matched with its tree ID") }
+  
+  for(site in unique(sf_long_current_filtered$Site)) {
+    p <- ggplot(filter(sf_long_current_filtered, Site == site), 
+                aes(TIMESTAMP, value, color = interaction(Tree, Plot))) +
+      scale_color_manual(values = random_palette) + 
       facet_grid(. ~ Plot) +
       ylab("Raw sapflow") +
       geom_point(na.rm = TRUE) + 
-      ggtitle(site)
-      print(p)
+      ggtitle(site) + 
+      theme(legend.position = "bottom")
+      
+    print(p)
   }
 }
+
+
 ```
 
 # TEROS
@@ -310,8 +352,8 @@ no_data_check(teros, "TEROS")
 ```
 
 ```{r teros-plots}
-#| fig-width: 9
-#| fig-height: 6
+#| fig-width: 15
+#| fig-height: 15
 if(nrow(teros) > 0) {
   teros %>% 
     pivotstep() %>% 
@@ -341,13 +383,30 @@ teros_long_current <- teros_long %>%
     TIMESTAMP <= Sys.time()
   )
   
+##Look at rows where the Depth is NA. If the value is also NA, remove that row. If the value is not NA, write out a warning that "A TEROS sensor is not correctly matched with its depth ID". 
+  teros_long_current_NA <- subset(teros_long_current, is.na(Depth_cm))
+  
+  teros_long_current_filtered <- 
+    if(nrow(teros_long_current_NA) > 0 & 
+       mean(teros_long_current_NA$value, na.rm = TRUE) == 0) { 
+            teros_long_current %>% filter(!is.na(Depth_cm))} else { 
+            teros_long_current }
+  
+    if(nrow(teros_long_current_filtered) <  nrow(teros_long_current)) { 
+            print ("All TEROS sensor depths accounted for")} else { 
+            print ("A TEROS sensor is not correctly matched with its depth") }
+
+
   for(site in unique(teros_long_current$Site)) {
     teros_site <- filter(teros_long_current, Site == site)
-    p <- ggplot(teros_site, aes(TIMESTAMP, value, color = Depth_cm)) +
+    p <- ggplot(teros_site, 
+                aes(TIMESTAMP, value, color = interaction(Depth_cm, ID))) +
       facet_grid(sensor_name ~ Plot, scales = "free") +
       geom_point(na.rm = TRUE) +
       theme(axis.text.x = element_text(angle = 90)) +
-      ggtitle(paste(site, "TEROS"))
+      ggtitle(paste(site, "TEROS")) + 
+      theme(legend.position = "bottom")
+    
     print(p)
   }
 }
@@ -439,8 +498,23 @@ troll_long %>%
   )
 }
 
+##Set Instrument ID 
+troll_long_current <- troll_long_current %>% 
+  mutate(AQID = paste0("AQ", gsub("WaterLevel", "", Table)))
+
+  
+if("TMP" %in% troll_long_current$Site) {
+  troll_long_current <- troll_long_current %>% 
+    mutate(troll_facet = troll_long_current$Plot, 
+           color_key = troll_long_current$AQID)
+} else {
+  troll_long_current <- troll_long_current %>% 
+    mutate(troll_facet = troll_long_current$Site, 
+           color_key = troll_long_current$Plot)
+}
+
 ## set color palette
-location_colors = PNWColors::pnw_palette("Sunset", length(unique(troll_long_current$Plot)))
+location_colors = PNWColors::pnw_palette("Sunset", length(unique(troll_long_current$color_key)))
 location_colors = c("UP" = "#20063B",
                     "TR" = "#FFBC42",
                     "SWAMP" = "darkgrey",
@@ -448,7 +522,9 @@ location_colors = c("UP" = "#20063B",
                     "UP" = "#3B1F2B", 
                     "C" = "springgreen2",
                     "F" = "cyan2",
-                    "S" = "violetred2")
+                    "S" = "violetred2", 
+                    "AQ200" = "#20063B", 
+                    "AQ600" = "#FFBC42")
 
 ## This function creates standardized time-series plots 
 #flag values where AQ is out of water
@@ -458,22 +534,26 @@ ts_plot <- function(var, y_lab){
   
   x <- troll_long_current %>% filter(name == var)
   
-  ggplot(x, aes(TIMESTAMP, value, color = Plot)) +
-    geom_line(na.rm = TRUE) +
+  ggplot(x, aes(TIMESTAMP, value, color = color_key)) +
+    # geom_line(na.rm = TRUE) +
     geom_point(na.rm = TRUE) + 
     geom_point(na.rm = TRUE, data = x %>% filter(flagged == TRUE), color = "red", alpha = 0.75) +
-    facet_wrap(~ Site, nrow = 1, scales = "free_y") +
+    facet_wrap(~ troll_facet, nrow = 1, scales = "free_y") +
     labs(x = "", y = y_lab) +
     scale_color_manual(values = location_colors) +
     scale_x_datetime(date_breaks = "3 days", date_labels = "%m/%d")
 }
 
 ## Create the time-series plots you want
-ts_wl_plot <- ggplot(troll_long_current, aes(TIMESTAMP, water_level_cm, color = Plot)) + 
-      geom_line(na.rm = TRUE) +
+ts_wl_plot <- ggplot(troll_long_current, aes(TIMESTAMP, water_level_cm, 
+                                             color = color_key)) + 
+      #geom_line(na.rm = TRUE) +
       geom_point(na.rm = TRUE) + 
-      geom_point(na.rm = TRUE, data = troll_long_current %>% filter(flagged == TRUE), color = "red", alpha = 0.75) +
-      facet_wrap(~ Site, nrow = 1, scales = "free_y") + 
+      geom_point(na.rm = TRUE, 
+                 data = troll_long_current %>% 
+                 filter(flagged == TRUE), 
+                 color = "red", alpha = 0.75) +
+      facet_wrap(~ troll_facet, nrow = 1, scales = "free_y") + 
       labs(x = "", y = "Water Level (cm)\nRed = troll above water") +
       scale_color_manual(values = location_colors) + 
       scale_x_datetime(date_breaks = "3 days", date_labels = "%m/%d")
@@ -551,7 +631,7 @@ if("TMP" %in% troll_long_current$Site) {
  prop_plot_200 <- troll_long_current %>% 
   
    filter(name == "Pressure" & !is.na(value) & Table == "WaterLevel200") %>% ##Why are there 3 replicates for each timestamp and only one has a value?
-  group_by(Site, Plot) %>% 
+  group_by(Site, Plot, Instrument_ID) %>% 
   count() %>%
   bind_rows(anti_join(max_counts, .)) %>% 
   mutate(n = ifelse(is.na(n), 0, n)) %>% 
@@ -667,6 +747,8 @@ if(nrow(redox) > 0) {
     pivotstep() %>% 
     separate(name, into = c("which", "number"), extra = "drop") %>% 
     mutate(number = as.numeric(number)) %>% 
+    select(-c(Plot, Logger)) %>% 
+    # left_join(REDOX_METADATA, by = c("Site", "which", "number")) %>% ##add in tmp metadata
     left_join(redox_assignments, by = "number") %>% 
     mutate(Depth = as.factor(Depth)) %>%
     mutate(Depth_Rep = as.factor(paste(Depth, Rep, sep = "-"))) ->
@@ -682,7 +764,7 @@ redox_long_current <- redox_long %>%
   for(site in unique(redox_long_current$Site)) {
     redox_site <- filter(redox_long_current, Site == site)
     p <- ggplot(redox_site, aes(TIMESTAMP, value, color = Depth_Rep)) +
-      facet_grid(which ~ Plot) +
+      facet_grid(which ~ Site) +
       geom_point(na.rm = TRUE) +
       scale_color_manual(values = redox_colors) + 
       theme(axis.text.x = element_text(angle = 90)) +
@@ -705,7 +787,7 @@ no_data_check(exo, "Exo")
 #| fig-height: 9
 if(nrow(exo) > 0) {
   exo %>% 
-    select(-Date, -Time, -sn, -snn) %>% 
+    select(-Date, -Time, -sn, -snn, -c(Battery_v, TSS_MgL, Wiper_Current_ma, Wiper_Position_mv, pH_mv, ODO_local, ODO_sat, FDOM_RFU, Conductivity, Turbidity_Raw)) %>% 
     pivotstep() -> 
     exo_long
   
@@ -715,6 +797,9 @@ exo_long_current <- exo_long %>%
     TIMESTAMP <= Sys.time()
   )
   
+# exo_long_current_pressure <- exo_long_current %>% 
+#   filter(name == "Pressure_psia")
+
   for(site in unique(exo_long_current$Site)) {
     p <- ggplot(filter(exo_long_current, Site == site), aes(TIMESTAMP, value)) +
       facet_wrap(. ~ name, scales = "free") +
