@@ -1,69 +1,67 @@
 Plot,Sapflux_ID,Tree_ID,Species_Code,Grid_Square,Logger,Port,PakBus,Installation_Date,Last_Checked,Status,Pending_Action,Notes
-Control,C7,1439,ACRU,B3,11,1,41,19-Mar-2021,22-Aug-2025,Active,,CR1000X installed 9/21/21
-Control,C19,1451,ACRU,A1,11,2,41,3-Jun-2022,22-Aug-2025,High,monitor,Installed around 10am; replaced C8/Port 2; top dead 6/21/24; dead 
-Control,C10,1387,ACRU,D4,11,3,41,17-Mar-2021; 19-Dec-2024,22-Aug-2025,High,monitor," a little high 8/25/21; CR1000X installed 9/21/21; replaced 12/19/24; dead top blew off 4/16/25; reading high as of July 2025, maybe dead top??"
-Control,C11,1395,ACRU,F2,11,4,41,17-Mar-2021,22-Aug-2025,Active,,"still reading a cycle, just high???; CR1000X installed 9/21/21; replaced sensor 8/29/24"
-Control,C16,1390,FAGR,E4,11,5,41,28-Apr-2022,22-Aug-2025,Active,,CR1000X installed 9/21/21; replaced 4/28/22; bad 4-6 cicuit on power regulator
-Control,C18,1452,FAGR,NA,11,6,41,17-Mar-2021,22-Aug-2025,Active,,CR1000X installed 9/21/21; bas sensor; disconnected 1/10/24; replaced 2/29/24 - still bad readings; fixed 4/5/24
-Control,C3,1425,LITU,C5,12,1,42,5-Sept-2023,22-Aug-2025,Active,,bad reading 8/14/23; replaced 9/5/23
-Control,C6,1411,LITU,B7,12,2,42,8-Mar-2023,22-Aug-2025,Active,,bad 11/25/22; draining power
-Control ,C9,1456,ACRU,NA,12,3,42,17-Mar-2021,22-Aug-2025,Active,,Outside plot (W grid A2)
-Control,C13,1407,FAGR,B8,12,4,42,17-Mar-2021,22-Aug-2025,Active,,
-Control,C14,1412,FAGR,B7,12,5,42,8-Mar-2023,22-Aug-2025,Active,,bad sensor 12/28/22; replaced 3/8/23
-Control,C15,1432,FAGR,A4,12,6,42,,22-Aug-2025,Active,,
-Control,CD14,1412,FAGR,B7,12,8,42,7-Apr-2021,22-Aug-2025,Active,,
-Control,C1,1384,LITU,F5,13,1,43,19-Mar-2021,22-Aug-2025,Active,,
-Control,C2,1385,LITU,F5,13,2,43,5-Aug-2022; 18-Jun-2025,22-Aug-2025,Active,,disconnected 6/6/25; need to replace; replaced 6/18/25
-Control,C4,1325,LITU,H4,13,3,43,19-Mar-2021; 16-Apr-2025,22-Aug-2025,Active,,Bad; replaced 4/16/25
-Control,C5,1330,LITU,I3,13,4,43,10-Jun-2022,22-Aug-2025,Active,,Bad; replaced 6/10/22
-Control,C12,1328,ACRU,G3,13,5,43,,22-Aug-2025,High,monitor,high; 0.955; 0.881; 0.848; 0.879; 0.914; 0.917; 0.925; 0.876; 0.938; 0.958; 0.963; 0.967; 0.634; top dead 8/7/25
-Control,C17,1380,FAGR,F6,13,6,43,7-Jun-2022,22-Aug-2025,Active,,low 4/26 0.2622; replaced 6/7/22; low 2/24 0.0379
-Control,C20,1319,ACRU,G6,13,7,43,17-Mar-2025,22-Aug-2025,Active,,brought online 17 Mar 2025 at 1254pm EDT
-Control,CD12,1328,ACRU,G3,13,9,43,7-Apr-2021,22-Aug-2025,Active,,Brought online 3 Jun 2021
-Control,CD16,1390,FAGR,E4,13,10,43,4-Jun-2021,22-Aug-2025,Active,,
-FW,F1,1578,LITU,H5,21,1,44,8-Mar-2023,22-Aug-2025,Active,,Top probe loose; bad sensor 11/17/22
-FW,F4,1561,LITU,E2,21,2,44,16-Mar-2021,22-Aug-2025,Active,,
-FW,F5,1591,LITU,G3,21,3,44,16-Mar-2021,22-Aug-2025,Active,,
-FW,F9,1592,ACRU,G3,21,4,44,,22-Aug-2025,Active,,
-FW,F12,1563,ACRU,F2,21,5,44,16-Mar-2021,22-Aug-2025,Active,,
-FW,F16,1596,FAGR,H4,21,6,44,20-Sept-2024,22-Aug-2025,Active,,unplugged 8/29/24; need replacement sensors; currently out of stock; replaced 9/20/24
-FW,FD5,1591,LITU,G3,21,7,44,2-Jun-2021,22-Aug-2025,Active,,
-FW,FD17,1580,FAGR,I6,21,9,44,2-Jun-2021,22-Aug-2025,Active,,
-FW,F20,1573,ACRU,I7,21,12,44,3-Jun-2022,22-Aug-2025,disconnected,replace ??,disconnected 8/7/25; replace??
-FW,F3,1552,LITU,D5,22,1,45,7-Jun-2022,22-Aug-2025,Active,,CR1000X installed 21 July 21; disconnected 11/10/21; replaced 3/4/22 - used same holes; disconnected 3/8/22; drilled new holes 3/11/22; still not working; replaced 6/7/22
-FW,F6,1551,LITU,D6,22,2,45,16-Mar-2021; 7-Aug-2025,22-Aug-2025,Active,,CR1000X installed 21 July 21; replaced sensor 8/7/25
-FW,F7,1520,ACRU,B5,22,3,45,16-Mar-2021,22-Aug-2025,Active,,CR1000X installed 21 July 21
-FW,F8,1521,ACRU,B4,22,4,45,16-Mar-2021,22-Aug-2025,Active,,CR1000X installed 21 July 21
-FW,F13,1519,FAGR,D6,22,5,45,8-Mar-2023,22-Aug-2025,Active,,CR1000X installed 21 July 21; bad 9/20/22
-FW,F15,1516,FAGR,A6,22,6,45,16-Mar-2021,22-Aug-2025,Active,,CR1000X installed 21 July 21
-FW,FD7,1520,ACRU,B5,22,7,45,1-Jun-2021,22-Aug-2025,Active,,CR1000X installed 21 July 21
-FW,F19,1559,ACRU,D2,22,8,45,3-Jun-2022,22-Aug-2025,Active,,Installed ~4pm
-FW,F2,1576,LITU,G6,23,1,46,16-Mar-2021; 29-Feb-2025,22-Aug-2025,Active,,rodent damage; unplugged 11/16/23; replaced 2/29/24
-FW,F10,1546,ACRU,F8,23,2,46,1-Jul-2021,22-Aug-2025,Active,,0.718; used same holes for July replacement
-FW,F11,1548,ACRU,F6,23,3,46,16-Mar-2021,22-Aug-2025,Active,,replaced 4/28/22
-FW,F14,1543,FAGR,D7,23,4,46,16-Mar-2021,22-Aug-2025,Active,,
-FW,F17,1580,FAGR,I6,23,5,46,,22-Aug-2025,Active,,
-FW,F18,1569,FAGR,H8,23,6,46,,22-Aug-2025,Active,,
-SW,S2,1790,LITU,C5,31,1,47,17-Mar-2021,22-Aug-2025,Active,,
-SW,S3,1783,LITU,E5,31,2,47,,22-Aug-2025,Active,,
-SW,S13,1848,FAGR,A2,31,3,47,29-May-2024,22-Aug-2025,Active,,
-SW,S15,1829,FAGR,E4,31,4,47,17-Mar-2021,22-Aug-2025,Active,,
-SW,S16,1839,FAGR,C2,31,5,47,7-Aug-2025,22-Aug-2025,Active,,did not realize this was NAN for so long 8/7/25
-SW,S17,1868,FAGR,D1,31,6,47,,22-Aug-2025,Active,,
-SW,SD16,1839,FAGR,C2,31,8,47,2-Jun-2021,22-Aug-2025,Active,,
-SW,S1,1771,LITU,F7,32,1,48,3-Jun-2022,22-Aug-2025,Active,,CR1000X installed 8 Oct 21; high 0.834; 4/20 1.564; 4/27 moved to own channel circuit; Replaced 6/3/22
-SW,S4,1781,LITU,E6,32,2,48,17-Mar-2021,22-Aug-2025,Active,,CR1000X installed 8 Oct 21; 0.811
-SW,S7,1733,ACRU,D7,32,3,48,17-Mar-2021,22-Aug-2025,Active,needs longer cable,CR1000X installed 8 Oct 21
-SW,S8,1788,ACRU,C6,32,4,48,17-Mar-2021,22-Aug-2025,Active,,CR1000X installed 8 Oct 21
-SW,S11,1772,ACRU,F6,32,5,48,17-Mar-2021,22-Aug-2025,Active,,CR1000X installed 8 Oct 21
-SW,S18,1780,FAGR,E5,32,6,48,17-Mar-2021,22-Aug-2025,Active,,CR1000X installed 8 Oct 21
-SW,S20,1749,ACRU,B8,32,7,48,8-Mar-2023,22-Aug-2025,Active,,Installed ~245pm; NAN 12/23/22; sensor damage by fallen tree; disconnected 1/10/23
-SW,SD3,1783,LITU,E5,32,8,48,2-Jun-2021,22-Aug-2025,Active,,CR1000X installed 8 Oct 21; 0.8033
-SW,S5,1778,LITU,F5,33,1,49,17-Mar-2021; 26-Mar-2025,22-Aug-2025,Active,,high 2/23 0.9122; 0.912; replaced 2/26/2025
-SW,S6,1773,LITU,G6,33,2,49,4-Mar-2022,22-Aug-2025,Active,,Bad sensor; replaced 3/4/2022
-SW,S9,1865,ACRU,F2,33,3,49,,22-Aug-2025,Active,,
-SW,S10,1775,ACRU,G5,33,4,49,,22-Aug-2025,Active,,
-SW,S12,1776,ACRU,F4,33,5,49,,22-Aug-2025,Active,,
-SW,S14,1851,FAGR,I2,33,6,49,1-Jun-2023,22-Aug-2025,Active,,a little low 9/7/22 0.26; 11/10 0.265; bad 5/30/23; replaced 6/1/23
-SW,SD12,1776,ACRU,F4,33,10,49,2-Jun-2021,22-Aug-2025,Active,,
-SW,S19,1835,ACRU,D2,33,12,49,3-Jun-2022,22-Aug-2025,Active,,Installed ~1130am
+Control,C7,1439,ACRU,B3,11,1,41,19-Mar-2021,29-Apr-2026,Active,,CR1000X installed 9/21/21
+Control,C10,1387,ACRU,D4,11,3,41,17-Mar-2021; 19-Dec-2024,29-Apr-2026,NAN,monitor," a little high 8/25/21; CR1000X installed 9/21/21; replaced 12/19/24; dead top blew off 4/16/25; reading high as of July 2025, maybe dead top??"
+Control,C11,1395,ACRU,F2,11,4,41,17-Mar-2021,29-Apr-2026,Active,,"still reading a cycle, just high???; CR1000X installed 9/21/21; replaced sensor 8/29/24"
+Control,C16,1390,FAGR,E4,11,5,41,28-Apr-2022,29-Apr-2026,Active,,CR1000X installed 9/21/21; replaced 4/28/22; bad 4-6 cicuit on power regulator
+Control,C18,1452,FAGR,NA,11,6,41,17-Mar-2021,29-Apr-2026,Active,,CR1000X installed 9/21/21; bas sensor; disconnected 1/10/24; replaced 2/29/24 - still bad readings; fixed 4/5/24
+Control,C3,1425,LITU,C5,12,1,42,5-Sept-2023,29-Apr-2026,Active,,bad reading 8/14/23; replaced 9/5/23
+Control,C6,1411,LITU,B7,12,2,42,8-Mar-2023,29-Apr-2026,Active,,bad 11/25/22; draining power
+Control ,C9,1456,ACRU,NA,12,3,42,17-Mar-2021,29-Apr-2026,Active,,Outside plot (W grid A2)
+Control,C13,1407,FAGR,B8,12,4,42,17-Mar-2021,29-Apr-2026,Active,,
+Control,C14,1412,FAGR,B7,12,5,42,8-Mar-2023,29-Apr-2026,Active,,bad sensor 12/28/22; replaced 3/8/23
+Control,C15,1432,FAGR,A4,12,6,42,,29-Apr-2026,Active,,
+Control,CD14,1412,FAGR,B7,12,8,42,7-Apr-2021,29-Apr-2026,Active,,
+Control,C1,1384,LITU,F5,13,1,43,19-Mar-2021,29-Apr-2026,Active,,
+Control,C2,1385,LITU,F5,13,2,43,5-Aug-2022; 18-Jun-2025,29-Apr-2026,Active,,disconnected 6/6/25; need to replace; replaced 6/18/25
+Control,C4,1325,LITU,H4,13,3,43,19-Mar-2021; 16-Apr-2025,29-Apr-2026,Active,,Bad; replaced 4/16/25
+Control,C5,1330,LITU,I3,13,4,43,10-Jun-2022,29-Apr-2026,Active,high,Bad; replaced 6/10/22
+Control,C17,1380,FAGR,F6,13,6,43,7-Jun-2022,29-Apr-2026,Active,high,low 4/26 0.2622; replaced 6/7/22; low 2/24 0.0379
+Control,C20,1319,ACRU,G6,13,7,43,17-Mar-2025,29-Apr-2026,Active,,brought online 17 Mar 2025 at 1254pm EDT
+Control,CD16,1390,FAGR,E4,13,10,43,4-Jun-2021,29-Apr-2026,Active,,
+Control,C21,1339,ACRU,G2,13,11,43,29-Apr-2026,29-Apr-2026,Active,,
+FW,F1,1578,LITU,H5,21,1,44,8-Mar-2023,29-Apr-2026,NAN,Check,Top probe loose; bad sensor 11/17/22
+FW,F4,1561,LITU,E2,21,2,44,16-Mar-2021,29-Apr-2026,Active,,
+FW,F5,1591,LITU,G3,21,3,44,16-Mar-2021,29-Apr-2026,Active,,
+FW,F9,1592,ACRU,G3,21,4,44,,29-Apr-2026,Active,,
+FW,F12,1563,ACRU,F2,21,5,44,16-Mar-2021,29-Apr-2026,Active,,
+FW,F16,1596,FAGR,H4,21,6,44,20-Sept-2024,29-Apr-2026,Active,,unplugged 8/29/24; need replacement sensors; currently out of stock; replaced 9/20/24
+FW,FD5,1591,LITU,G3,21,7,44,2-Jun-2021,29-Apr-2026,Active,,
+FW,FD17,1580,FAGR,I6,21,9,44,2-Jun-2021,29-Apr-2026,Active,,
+FW,F20,1573,ACRU,I7,21,12,44,3-Jun-2022; 1-Dec-2025,29-Apr-2026,High,monitor,disconnected 8/7/25; replace??; replaced 12/1/25; high readings; check status at leaf out
+FW,F3,1552,LITU,D5,22,1,45,7-Jun-2022,29-Apr-2026,Active,,CR1000X installed 21 July 21; disconnected 11/10/21; replaced 3/4/22 - used same holes; disconnected 3/8/22; drilled new holes 3/11/22; still not working; replaced 6/7/22
+FW,F6,1551,LITU,D6,22,2,45,16-Mar-2021; 7-Aug-2025,29-Apr-2026,Active,,CR1000X installed 21 July 21; replaced sensor 8/7/25
+FW,F7,1520,ACRU,B5,22,3,45,16-Mar-2021,29-Apr-2026,Active,,CR1000X installed 21 July 21
+FW,F8,1521,ACRU,B4,22,4,45,16-Mar-2021,29-Apr-2026,Active,,CR1000X installed 21 July 21
+FW,F13,1519,FAGR,D6,22,5,45,8-Mar-2023,29-Apr-2026,Active,,CR1000X installed 21 July 21; bad 9/20/22
+FW,F15,1516,FAGR,A6,22,6,45,16-Mar-2021,29-Apr-2026,Active,,CR1000X installed 21 July 21
+FW,FD7,1520,ACRU,B5,22,7,45,1-Jun-2021,29-Apr-2026,Active,,CR1000X installed 21 July 21
+FW,F19,1559,ACRU,D2,22,8,45,3-Jun-2022,29-Apr-2026,Active,,Installed ~4pm
+FW,F2,1576,LITU,G6,23,1,46,16-Mar-2021; 29-Feb-2024,29-Apr-2026,Active,,rodent damage; unplugged 11/16/23; replaced 2/29/24
+FW,F10,1546,ACRU,F8,23,2,46,1-Jul-2021,29-Apr-2026,Active,,0.718; used same holes for July replacement
+FW,F11,1548,ACRU,F6,23,3,46,16-Mar-2021,29-Apr-2026,Active,,replaced 4/28/22
+FW,F14,1543,FAGR,D7,23,4,46,16-Mar-2021,29-Apr-2026,Active,,
+FW,F17,1580,FAGR,I6,23,5,46,,29-Apr-2026,Active,,
+FW,F18,1569,FAGR,H8,23,6,46,,29-Apr-2026,Active,,
+SW,S2,1790,LITU,C5,31,1,47,17-Mar-2021,29-Apr-2026,Active,,
+SW,S3,1783,LITU,E5,31,2,47,,29-Apr-2026,Active,,
+SW,S13,1848,FAGR,A2,31,3,47,29-May-2024,29-Apr-2026,Active,,
+SW,S15,1829,FAGR,E4,31,4,47,17-Mar-2021,29-Apr-2026,Active,,
+SW,S16,1839,FAGR,C2,31,5,47,7-Aug-2025,29-Apr-2026,Active,,did not realize this was NAN for so long 8/7/25
+SW,S17,1868,FAGR,D1,31,6,47,,29-Apr-2026,Active,,
+SW,SD16,1839,FAGR,C2,31,8,47,2-Jun-2021,29-Apr-2026,Active,,
+SW,S1,1771,LITU,F7,32,1,48,3-Jun-2022,29-Apr-2026,Active,,CR1000X installed 8 Oct 21; high 0.834; 4/20 1.564; 4/27 moved to own channel circuit; Replaced 6/3/22
+SW,S4,1781,LITU,E6,32,2,48,17-Mar-2021,29-Apr-2026,Active,,CR1000X installed 8 Oct 21; 0.811
+SW,S7,1733,ACRU,D7,32,3,48,17-Mar-2021,29-Apr-2026,Active,needs longer cable,CR1000X installed 8 Oct 21
+SW,S8,1788,ACRU,C6,32,4,48,17-Mar-2021,29-Apr-2026,Active,,CR1000X installed 8 Oct 21
+SW,S11,1772,ACRU,F6,32,5,48,17-Mar-2021,29-Apr-2026,Active,,CR1000X installed 8 Oct 21
+SW,S18,1780,FAGR,E5,32,6,48,17-Mar-2021,29-Apr-2026,Active,,CR1000X installed 8 Oct 21
+SW,S20,1749,ACRU,B8,32,7,48,8-Mar-2023,29-Apr-2026,Active,,Installed ~245pm; NAN 12/23/22; sensor damage by fallen tree; disconnected 1/10/23
+SW,SD3,1783,LITU,E5,32,8,48,2-Jun-2021,29-Apr-2026,Active,,CR1000X installed 8 Oct 21; 0.8033
+SW,S5,1778,LITU,F5,33,1,49,17-Mar-2021; 26-Mar-2025,29-Apr-2026,Active,,high 2/23 0.9122; 0.912; replaced 2/26/2025
+SW,S6,1773,LITU,G6,33,2,49,4-Mar-2022,29-Apr-2026,Active,,Bad sensor; replaced 3/4/2022
+SW,S9,1865,ACRU,F2,33,3,49,,29-Apr-2026,Active,,
+SW,S10,1775,ACRU,G5,33,4,49,,29-Apr-2026,Active,,
+SW,S12,1776,ACRU,F4,33,5,49,,29-Apr-2026,Active,,
+SW,S14,1851,FAGR,I2,33,6,49,1-Jun-2023,29-Apr-2026,Active,,a little low 9/7/22 0.26; 11/10 0.265; bad 5/30/23; replaced 6/1/23
+SW,SD12,1776,ACRU,F4,33,10,49,2-Jun-2021,29-Apr-2026,Active,,
+SW,S19,1835,ACRU,D2,33,12,49,3-Jun-2022,29-Apr-2026,Active,,Installed ~1130am

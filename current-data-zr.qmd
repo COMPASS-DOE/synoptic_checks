@@ -235,6 +235,7 @@ read_files <- function(type, sitelist = SITES, path = PATH) {
       # The TMP data files have logger_raw with format PNNL_{LOGGER}
       x %>% 
         separate(Logger_raw, into = c("Site", "Logger", "Plot"), remove = TRUE) %>% 
+        filter(Site != "ERT") %>% 
         mutate(Site = "TMP",
                Plot = case_when(Logger %in% c("11", "12", "13") ~ "C",
                                 Logger %in% c("21", "22", "23") ~ "F",
@@ -387,18 +388,20 @@ teros_long_current <- teros_long %>%
   )
   
 ##Look at rows where the Depth is NA. If the value is also NA, remove that row. If the value is not NA, write out a warning that "A TEROS sensor is not correctly matched with its depth ID". 
-  teros_long_current_NA <- subset(teros_long_current, is.na(Depth_cm))
-  
+  teros_long_current_NA_Depth <- subset(teros_long_current, is.na(Depth_cm))
+  teros_long_current_NA_value <- subset(teros_long_current_NA_Depth, is.na(value))
+
 ##Only filter out NA depths if all values are either NA or 0, otherwise leave the dataframe as is
   teros_long_current_filtered <- 
-    if(nrow(teros_long_current_NA) > 0 & 
-       mean(teros_long_current_NA$value, na.rm = TRUE) == 0) { 
+    if((nrow(teros_long_current_NA_Depth) > 0 &
+       mean(teros_long_current_NA_Depth$value, na.rm = TRUE) == 0) |
+       nrow(teros_long_current_NA_Depth) == nrow(teros_long_current_NA_value)) { 
             teros_long_current %>% filter(!is.na(Depth_cm))} else { 
             teros_long_current }
 
-##If the dataframe has been filtered or there are no NA depth values, print that the TEROS sensors are all accounted for. Otherwise, if the dataframe was not filtered then there is a TERO sensor that was not correctly matched with a depth and is outputting values. 
+##If the dataframe has been filtered or there are no NA depth values, print that the TEROS sensors are all accounted for. Otherwise, if the dataframe was not filtered then there is a TEROS sensor that was not correctly matched with a depth and is outputting values. 
     if(nrow(teros_long_current_filtered) < nrow(teros_long_current)) { 
-      print ("All TEROS sensor depths accounted for")} else if (nrow(teros_long_current_NA) == 0) { 
+      print ("All TEROS sensor depths accounted for")} else if (nrow(teros_long_current_NA_Depth) == 0) { 
         print ("All TEROS sensor depths accounted for")} else { 
         print ("A TEROS sensor is not correctly matched with its depth") }
             
@@ -752,9 +755,6 @@ redox_assignments <- tribble(~number, ~Depth, ~Rep,
   print ("No redox assignments")
 }
 
-##Is this correct for TMP plots?  
-##No "Plot" data included for TMP redox data? 
-
 if(nrow(redox) > 0) {
   redox %>% 
     select(-BattV) %>% 
@@ -775,16 +775,26 @@ redox_long_current <- redox_long %>%
     TIMESTAMP <= Sys.time()
   )
 
-# if("TMP" %in% redox_long_current$Site) {
-#   redox_long_current <- redox_long_current %>% 
-#     mutate(redox_facet = redox_long_current$Site)
-# } else {
-#   redox_long_current <- redox_long_current %>% 
-#     mutate(redox_facet = redox_long_current$Plot)
-# }
-  
-  for(site in unique(redox_long_current$Site)) {
-    redox_site <- filter(redox_long_current, Site == site)
+##Look at rows where the Depth_Rep is NA. If the value is also NA, remove that row. If the value is not NA, write out a warning that "A Redox sensor is not correctly matched with its depth ID". 
+  redox_long_current_NA_Depth <- subset(redox_long_current, is.na(Depth))
+  redox_long_current_NA_value <- subset(redox_long_current_NA_Depth, is.na(value))
+
+##Only filter out NA depths if all values are either NA or 0, otherwise leave the dataframe as is
+  redox_long_current_filtered <- 
+    if((nrow(redox_long_current_NA_Depth) > 0 &
+       mean(redox_long_current_NA_Depth$value, na.rm = TRUE) == 0) |
+       nrow(redox_long_current_NA_Depth) == nrow(redox_long_current_NA_value)) { 
+            redox_long_current %>% filter(!is.na(Depth))} else { 
+            redox_long_current }
+
+##If the dataframe has been filtered or there are no NA depth values, print that the redox sensors are all accounted for. Otherwise, if the dataframe was not filtered then there is a redox sensor that was not correctly matched with a depth and is outputting values. 
+    if(nrow(redox_long_current_filtered) < nrow(redox_long_current)) { 
+      print ("All Redox sensor depths accounted for")} else if (nrow(redox_long_current_NA_Depth) == 0) { 
+        print ("All Redox sensor depths accounted for")} else { 
+        print ("A Redox sensor is not correctly matched with its depth") }
+
+  for(site in unique(redox_long_current_filtered$Site)) {
+    redox_site <- filter(redox_long_current_filtered, Site == site) %>% filter(which == "RedoxRa" | which == "RedoxRb") ##Redox Rc and RedoxRd are from ERT sensors
     p <- ggplot(redox_site, aes(TIMESTAMP, value, color = Depth_Rep)) +
       facet_grid(which ~ Plot) +
       geom_point(na.rm = TRUE) +
