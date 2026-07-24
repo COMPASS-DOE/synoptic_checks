@@ -1,7 +1,7 @@
 ---
 author: "COMPASS workflows team"
 params:
-  DROPBOX: "C:/Users/readz/Smithsonian Dropbox/Zoe Read"
+  DROPBOX: "C:/Users/wilsonsj/Smithsonian Dropbox/Stephanie Wilson"
   SITES: "TMP"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
@@ -426,6 +426,27 @@ teros_long_current <- teros_long %>%
       ggtitle(paste(site, "TEROS"))
     
     print(p)
+    
+  #code to plot the TMP Teros with box plot and line for conductivity threshold: 
+  
+  #  vline_df = data.frame(sensor_name = "EC", xintercept = 235) 
+    
+   # p1 <- ggplot(teros_site, 
+  #              aes(value, factor(Depth_cm, levels = c("30", "15", "5")),
+   #                 color = Plot)) +
+    #  facet_grid(Plot ~ sensor_name, scales = "free") +
+    #  geom_boxplot(na.rm = TRUE) +
+    #  scale_color_manual(values = c('springgreen2', 'cyan2', 'violetred2')) +
+    #  theme(axis.text.x = element_text(angle = 0)) +
+    #  ggtitle(paste(site, "TEROS")) + 
+    #  geom_vline(data = vline_df, 
+    #             aes(xintercept = xintercept), 
+    #             inherit.aes = FALSE, 
+    #             color = "black") + 
+    #  theme(legend.position = "none") + 
+    #  labs(x = "Depth (cm)", y = "Value")
+    
+  #  print(p1)
   }
 }
 ```
