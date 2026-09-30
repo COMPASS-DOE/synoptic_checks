@@ -2,7 +2,7 @@
 author: "COMPASS workflows team"
 params:
   DROPBOX: "C:/Users/readz/Smithsonian Dropbox/Zoe Read"
-  SITES: "TMP"
+  SITES: "CB"
 date: now
 date-format: "YYYY-MM-DD HH:mm:ssZ"
 execute:
@@ -30,6 +30,8 @@ library(lubridate)
 library(cowplot)
 library(forcats)
 library(stringr)
+library(weathR)
+library(sf)
 
 SITES <- params$SITES
 PATH <- params$DROPBOX
@@ -281,6 +283,78 @@ robust_range <- function(x, digits) {
     return("-")
   }
 }
+```
+
+# Weather Predictions
+
+```{r weather-plots}
+#| fig-height: 5
+
+TMP <- point_forecast(lat = 38.8747, lon = -76.5519) %>% 
+    as.data.frame() %>% 
+    mutate(time = as.POSIXct(time)) %>% 
+    mutate(Site = "TMP")
+
+MSM <- point_forecast(lat = 38.4310, lon = -76.2277) %>% 
+    as.data.frame() %>% 
+    mutate(time = as.POSIXct(time)) %>% 
+    mutate(Site = "MSM")
+
+SWH <- point_forecast(lat = 37.56883, lon = -76.8964) %>% 
+    as.data.frame() %>% 
+    mutate(time = as.POSIXct(time)) %>% 
+    mutate(Site = "SWH")
+
+GCW <- point_forecast(lat = 38.8745, lon = -76.5515) %>% 
+    as.data.frame() %>% 
+    mutate(time = as.POSIXct(time)) %>% 
+    mutate(Site = "GCW")
+
+GWI <- point_forecast(lat = 37.2194, lon = -76.4092) %>% 
+    as.data.frame() %>% 
+    mutate(time = as.POSIXct(time)) %>% 
+    mutate(Site = "GWI")
+
+locations = bind_rows(TMP, MSM, SWH, GCW, GWI)
+
+locations_filtered <- locations %>% 
+  filter(Site %in% SITES)
+
+##Temperature forecast
+for(site in unique(locations_filtered$Site)) {
+    p <- ggplot(filter(locations_filtered, Site == site), 
+                aes(x = time, y = temp)) +
+      geom_point(color = "brown") +
+      geom_smooth(method = "loess", span = .15, se = FALSE, color = "indianred") +
+      labs(title = paste0(site, 
+                          " Temperature Forecasts for the Week of ", 
+                          Sys.Date()),
+           y = "Temperature (Degrees Fahrenheit)",
+           x = "Day") +
+      theme_minimal() + 
+      scale_x_datetime(breaks = "1 day", date_labels = "%Y-%m-%d")
+      theme(legend.position = "bottom")
+      
+    print(p)
+  }
+
+##Rain forecast
+for(site in unique(locations_filtered$Site)) {
+    p <- ggplot(filter(locations_filtered, Site == site), 
+                aes(x = time, y = p_rain)) +
+      geom_point(color = "brown") +
+      geom_smooth(method = "loess", span = .15, se = FALSE, color = "indianred") +
+      labs(title = paste0(site, 
+                          " Precipitation Potential for the Week of ", 
+                          Sys.Date()),
+           y = "Precipitation Potential (%)",
+           x = "Day") +
+      theme_minimal() + 
+      scale_x_datetime(breaks = "1 day", date_labels = "%Y-%m-%d")
+      theme(legend.position = "bottom")
+      
+    print(p)
+  }
 ```
 
 # Sapflow
